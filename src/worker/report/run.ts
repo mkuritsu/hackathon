@@ -14,6 +14,7 @@ export interface DailyReportResult {
 }
 
 export async function runDailyReport(env: Env): Promise<DailyReportResult> {
+	console.log(`[report] runDailyReport called at ${new Date().toISOString()}`);
 	const { pdf, key } = await generateAndStoreReport(env);
 	const { sent, failed, skipped } = await sendReportEmail(env, pdf, key);
 	return {
