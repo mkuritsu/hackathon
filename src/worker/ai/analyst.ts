@@ -1,4 +1,4 @@
-import { ANALYST_SYSTEM_PROMPT, buildAnalystUserPrompt } from "./prompts";
+import { buildAnalystUserPrompt, systemPromptFor } from "./prompts";
 import type { MarketContext } from "../adapters/types";
 import type { Action, Pitch, PortfolioContext } from "../contracts";
 
@@ -59,7 +59,7 @@ export async function runAnalyst(
 	try {
 		const res = await (ai as unknown as AiRunner).run(modelId, {
 			messages: [
-				{ role: "system", content: ANALYST_SYSTEM_PROMPT },
+				{ role: "system", content: systemPromptFor(ctx.kind) },
 				{ role: "user", content: buildAnalystUserPrompt(ctx, portfolio) },
 			],
 			response_format: { type: "json_schema", json_schema: PITCH_JSON_SCHEMA },

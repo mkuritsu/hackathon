@@ -5,13 +5,13 @@ type AppEnv = { Bindings: Env };
 
 export const researchApp = new Hono<AppEnv>();
 
-// POST /api/research/run  { adapter?, topN?, cycleId? }
-// Kicks off a ResearchWorkflow cycle. For live demos and the cron heartbeat.
+// POST /api/research/run  { markets?, topN?, cycleId? }
+// Kicks off a ResearchWorkflow cycle across markets.
 researchApp.post("/run", async (c) => {
 	const body = (await c.req.json().catch(() => ({}))) as Partial<ResearchParams>;
 	const params: ResearchParams = {
 		cycleId: body.cycleId ?? crypto.randomUUID(),
-		adapter: body.adapter ?? "crypto",
+		markets: body.markets,
 		topN: body.topN ?? 5,
 	};
 	const instance = await c.env.RESEARCH_WORKFLOW.create({ params });

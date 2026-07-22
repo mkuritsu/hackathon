@@ -207,3 +207,13 @@ Nail the shared contracts first so everyone builds in parallel against stubs.
 - [seed] Deferred: Containers/FFmpeg daily recap video stored in R2.
 - [added] KV model registry: centralize model ids in KV so models are swappable
   via config, not code (also one more Cloudflare product). GET /api/models.
+- [added] One analyst impl run as 4 market-scoped instances (crypto/meme,
+  stocks, prediction, sports) with per-market personas; one free source each
+  (CoinGecko, Yahoo, Polymarket, ESPN). Orchestrator ranks non-hold pitches by
+  confidence into "final calls".
+- [added] Execution model (POC): a single frontend button press triggers one
+  research cycle that executes the final buy/sells immediately (confidence-scaled
+  sizing) into D1 (positions/trades/cash), then holds. GET /api/portfolio feeds
+  the frontend from D1 (cash, positions, cost-basis NAV, trades).
+- [future] End-of-month liquidation + final report: NOT implemented
+  (ledger.liquidateAndReport is a stub). Mark-to-market NAV also future.
