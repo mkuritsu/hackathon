@@ -27,17 +27,61 @@ export async function renderReportPdf(
 	browser: BrowserRun,
 	data: ReportData,
 ): Promise<Uint8Array> {
-	const instance = await puppeteer.launch(browser);
+	const instance = await acquireBrowser(browser);
 	try {
 		const page = await instance.newPage();
-		await page.setContent(renderReportHtml(data), { waitUntil: "networkidle0" });
-		return await page.pdf({
-			format: "A4",
-			printBackground: true,
-			margin: { top: "0", bottom: "0", left: "0", right: "0" },
-		});
+		try {
+			await page.setContent(renderReportHtml(data), { waitUntil: "networkidle0" });
+			return await page.pdf({
+				format: "A4",
+				printBackground: true,
+				margin: { top: "0", bottom: "0", left: "0", right: "0" },
+			});
+		} finally {
+			await page.close();
+		}
 	} finally {
-		await instance.close();
+		// Keep the browser alive (disconnect, don't close) so the next report can
+		// reuse this session instead of launching a new instance.
+		instance.disconnect();
+	}
+}
+
+// Browser Rendering caps concurrent browser instances and the rate of new
+// instances. Reuse an idle session when one exists; only launch a fresh browser
+// as a fallback. This avoids "Unable to create new browser" errors and recovers
+// sessions leaked by earlier aborted requests.
+async function acquireBrowser(browser: BrowserRun) {
+	const sessionId = await pickFreeSession(browser);
+	if (sessionId) {
+		try {
+			return await puppeteer.connect(browser, sessionId);
+		} catch (error) {
+			console.log(`Failed to reuse browser session ${sessionId}: ${error}`);
+		}
+	}
+	try {
+		return await puppeteer.launch(browser);
+	} catch (error) {
+		// Under the concurrency/rate limit: retry once by reusing any free session
+		// that may have appeared (or been freed) in the meantime.
+		console.log(`Browser launch failed, retrying via reuse: ${error}`);
+		const retryId = await pickFreeSession(browser);
+		if (retryId) {
+			return await puppeteer.connect(browser, retryId);
+		}
+		throw error;
+	}
+}
+
+async function pickFreeSession(browser: BrowserRun): Promise<string | undefined> {
+	try {
+		const sessions = await puppeteer.sessions(browser);
+		const free = sessions.filter((s) => !s.connectionId).map((s) => s.sessionId);
+		return free.length > 0 ? free[0] : undefined;
+	} catch (error) {
+		console.log(`Failed to list browser sessions: ${error}`);
+		return undefined;
 	}
 }
 
