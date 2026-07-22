@@ -21,5 +21,15 @@
 			"database_name": "hackathon-accounts",
 			"database_id": "e00e1f60-4881-4f06-bcce-35ab24795bcf"
 		}
+	],
+	"ai": {
+		"binding": "AI"
+	},
+	"workflows": [
+		{
+			"name": "research-workflow",
+			"binding": "RESEARCH_WORKFLOW",
+			"class_name": "ResearchWorkflow"
+		}
 	]
 }
