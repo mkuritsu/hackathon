@@ -12,6 +12,8 @@
 		"dev": "vite",
 		"db:migrate": "wrangler d1 migrations apply hackathon-accounts --local",
 		"db:migrate:remote": "wrangler d1 migrations apply hackathon-accounts --remote",
+		"kv:seed:models": "wrangler kv key put --binding=MODELS models \"{\\\"analyst\\\":\\\"@cf/meta/llama-3.3-70b-instruct-fp8-fast\\\"}\" --local",
+		"kv:seed:models:remote": "wrangler kv key put --binding=MODELS models \"{\\\"analyst\\\":\\\"@cf/meta/llama-3.3-70b-instruct-fp8-fast\\\"}\" --remote",
 		"lint": "eslint .",
 		"preview": "pnpm build && vite preview"
 	},

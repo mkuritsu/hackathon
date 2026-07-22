@@ -21,5 +21,21 @@
 			"database_name": "hackathon-accounts",
 			"database_id": "e00e1f60-4881-4f06-bcce-35ab24795bcf"
 		}
+	],
+	"ai": {
+		"binding": "AI"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "MODELS",
+			"id": "f9a226bde3ae4eab956827524b9ceae5"
+		}
+	],
+	"workflows": [
+		{
+			"name": "research-workflow",
+			"binding": "RESEARCH_WORKFLOW",
+			"class_name": "ResearchWorkflow"
+		}
 	]
 }
