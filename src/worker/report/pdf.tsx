@@ -1,7 +1,6 @@
 // Render the React report to a full HTML document, then hand it to Cloudflare
 // Browser Rendering (headless Chrome) to produce a PDF.
 
-import puppeteer from "@cloudflare/puppeteer";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ReportDocument, type ReportData } from "./ReportDocument";
 import type { ReportLeaderboardRow, ReportTrade } from "./ReportDocument";
@@ -27,62 +26,37 @@ export async function renderReportPdf(
 	browser: BrowserRun,
 	data: ReportData,
 ): Promise<Uint8Array> {
-	const instance = await acquireBrowser(browser);
-	try {
-		const page = await instance.newPage();
+	const html = renderReportHtml(data);
+
+	// Use the Browser Rendering PDF Quick Action: it manages the browser session
+	// lifecycle for us (no manual launch/connect/close), which avoids the
+	// concurrency/session errors that come from launching Puppeteer directly.
+	// Retry a couple of times to ride out transient 500s from the service.
+	let lastError: unknown;
+	for (let attempt = 1; attempt <= 3; attempt++) {
 		try {
-			await page.setContent(renderReportHtml(data), { waitUntil: "networkidle0" });
-			return await page.pdf({
-				format: "A4",
-				printBackground: true,
-				margin: { top: "0", bottom: "0", left: "0", right: "0" },
+			const response = await browser.quickAction("pdf", {
+				html,
+				pdfOptions: {
+					format: "a4",
+					printBackground: true,
+					margin: { top: "0", bottom: "0", left: "0", right: "0" },
+				},
 			});
-		} finally {
-			await page.close();
-		}
-	} finally {
-		// Keep the browser alive (disconnect, don't close) so the next report can
-		// reuse this session instead of launching a new instance.
-		instance.disconnect();
-	}
-}
-
-// Browser Rendering caps concurrent browser instances and the rate of new
-// instances. Reuse an idle session when one exists; only launch a fresh browser
-// as a fallback. This avoids "Unable to create new browser" errors and recovers
-// sessions leaked by earlier aborted requests.
-async function acquireBrowser(browser: BrowserRun) {
-	const sessionId = await pickFreeSession(browser);
-	if (sessionId) {
-		try {
-			return await puppeteer.connect(browser, sessionId);
+			if (!response.ok) {
+				const detail = (await response.text()).slice(0, 300);
+				throw new Error(`Browser Rendering PDF failed: HTTP ${response.status} ${detail}`);
+			}
+			return new Uint8Array(await response.arrayBuffer());
 		} catch (error) {
-			console.log(`Failed to reuse browser session ${sessionId}: ${error}`);
+			lastError = error;
+			console.log(`PDF render attempt ${attempt} failed: ${error}`);
+			if (attempt < 3) {
+				await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+			}
 		}
 	}
-	try {
-		return await puppeteer.launch(browser);
-	} catch (error) {
-		// Under the concurrency/rate limit: retry once by reusing any free session
-		// that may have appeared (or been freed) in the meantime.
-		console.log(`Browser launch failed, retrying via reuse: ${error}`);
-		const retryId = await pickFreeSession(browser);
-		if (retryId) {
-			return await puppeteer.connect(browser, retryId);
-		}
-		throw error;
-	}
-}
-
-async function pickFreeSession(browser: BrowserRun): Promise<string | undefined> {
-	try {
-		const sessions = await puppeteer.sessions(browser);
-		const free = sessions.filter((s) => !s.connectionId).map((s) => s.sessionId);
-		return free.length > 0 ? free[0] : undefined;
-	} catch (error) {
-		console.log(`Failed to list browser sessions: ${error}`);
-		return undefined;
-	}
+	throw lastError instanceof Error ? lastError : new Error("Browser Rendering PDF failed");
 }
 
 // Assemble the report payload from the D1 system of record. Everything degrades
