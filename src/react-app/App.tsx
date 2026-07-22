@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import Login from "./Login";
+import Reports from "./Reports";
 
 const USERNAME_KEY = "hfoa.username";
+
+type View = "home" | "reports";
 
 type AuthState =
 	| { status: "loading" }
@@ -10,6 +13,7 @@ type AuthState =
 
 export default function App() {
 	const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+	const [view, setView] = useState<View>("home");
 
 	useEffect(() => {
 		let active = true;
@@ -59,6 +63,10 @@ export default function App() {
 		);
 	}
 
+	if (view === "reports") {
+		return <Reports onBack={() => setView("home")} />;
+	}
+
 	return (
 		<main>
 			<section className="hero">
@@ -73,6 +81,9 @@ export default function App() {
 					<a href="/api/report/preview" target="_blank" rel="noreferrer">
 						View report preview
 					</a>
+					<button type="button" onClick={() => setView("reports")}>
+						View reports
+					</button>
 					<button type="button" onClick={handleLogout}>
 						Sign out
 					</button>

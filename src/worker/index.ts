@@ -41,6 +41,35 @@ app.get("/api/report/preview", async (c) => {
 	return c.html(renderReportHtml(data));
 });
 
+// List the report PDFs stored in R2 (newest first).
+app.get("/api/reports", async (c) => {
+	const listing = await c.env.REPORTS.list();
+	const reports = listing.objects
+		.map((o) => ({ key: o.key, size: o.size, uploaded: o.uploaded }))
+		.sort((a, b) => new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime());
+	return c.json({ reports });
+});
+
+// Download a single report PDF from R2.
+app.get("/api/reports/:key{.+\\.pdf}", async (c) => {
+	const key = c.req.param("key");
+	if (key.includes("/") || key.includes("..")) {
+		return c.json({ error: "Invalid report key" }, 400);
+	}
+	const object = await c.env.REPORTS.get(key);
+	if (!object) {
+		return c.json({ error: "Report not found" }, 404);
+	}
+	return new Response(object.body, {
+		status: 200,
+		headers: {
+			"Content-Type": object.httpMetadata?.contentType ?? "application/pdf",
+			"Content-Disposition": `attachment; filename="${key}"`,
+			"Content-Length": String(object.size),
+		},
+	});
+});
+
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
 
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
