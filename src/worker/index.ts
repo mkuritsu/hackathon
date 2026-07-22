@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { authApp, sessionCookieMiddleware } from "./auth";
 import { gatherReportData, generateAndStoreReport, renderReportHtml } from "./report/pdf";
-import { sendReportEmail } from "./report/email";
+import { runDailyReport } from "./report/run";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -11,11 +11,31 @@ app.get("/api/health", (c) =>
 	c.json({
 		status: "ok",
 		message: "Worker API is online",
+		environment: c.env.ENVIRONMENT,
 		timestamp: new Date().toISOString(),
 	}),
 );
 
 app.route("/api/auth", authApp);
+
+// Dev-only routes: the Dev page and its testing endpoints exist only in the dev
+// environment. In production they return 404.
+const dev = new Hono<{ Bindings: Env }>();
+dev.use("*", async (c, next) => {
+	if (c.env.ENVIRONMENT !== "dev") {
+		return c.json({ error: "Not found" }, 404);
+	}
+	await next();
+});
+
+// Run the full daily job on demand (same code path as the cron): generate +
+// store in R2 + email to all users. Used by the dev page trigger button.
+dev.post("/report/run", async (c) => {
+	const result = await runDailyReport(c.env);
+	return c.json({ ok: true, ...result });
+});
+
+app.route("/api/dev", dev);
 
 // Daily desk report as a Browser Rendering PDF. GET (or POST for the live-demo
 // trigger) gathers the fund state from D1, renders the React report, and returns
@@ -75,11 +95,6 @@ export default {
 	// Daily cron: generate the report, store it in R2, then email the PDF to
 	// every registered user.
 	async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-		ctx.waitUntil(
-			(async () => {
-				const { pdf, key } = await generateAndStoreReport(env);
-				await sendReportEmail(env, pdf, key);
-			})(),
-		);
+		ctx.waitUntil(runDailyReport(env));
 	},
 } satisfies ExportedHandler<Env>;

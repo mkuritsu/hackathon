@@ -15,6 +15,12 @@
 		"not_found_handling": "single-page-application",
 		"run_worker_first": true
 	},
+	// Top-level = local dev default (used by `vite dev` without CLOUDFLARE_ENV).
+	// Behaves as the dev environment. vars + bindings are non-inheritable, so each
+	// named environment below must redeclare them.
+	"vars": {
+		"ENVIRONMENT": "dev"
+	},
 	"d1_databases": [
 		{
 			"binding": "ACCOUNTS_DB",
@@ -40,9 +46,71 @@
 			]
 		}
 	],
-	"triggers": {
-		"crons": [
-			"0 21 * * *"
-		]
+	"env": {
+		"dev": {
+			"vars": {
+				"ENVIRONMENT": "dev"
+			},
+			"d1_databases": [
+				{
+					"binding": "ACCOUNTS_DB",
+					"database_name": "hackathon-accounts",
+					"database_id": "e00e1f60-4881-4f06-bcce-35ab24795bcf"
+				}
+			],
+			"browser": {
+				"binding": "BROWSER",
+				"remote": true
+			},
+			"r2_buckets": [
+				{
+					"binding": "REPORTS",
+					"bucket_name": "hackathon-reports"
+				}
+			],
+			"send_email": [
+				{
+					"name": "EMAIL",
+					"allowed_sender_addresses": [
+						"hackathon-winners@mkuritsu.dev"
+					]
+				}
+			]
+		},
+		"production": {
+			"vars": {
+				"ENVIRONMENT": "production"
+			},
+			"d1_databases": [
+				{
+					"binding": "ACCOUNTS_DB",
+					"database_name": "hackathon-accounts",
+					"database_id": "e00e1f60-4881-4f06-bcce-35ab24795bcf"
+				}
+			],
+			"browser": {
+				"binding": "BROWSER",
+				"remote": true
+			},
+			"r2_buckets": [
+				{
+					"binding": "REPORTS",
+					"bucket_name": "hackathon-reports"
+				}
+			],
+			"send_email": [
+				{
+					"name": "EMAIL",
+					"allowed_sender_addresses": [
+						"hackathon-winners@mkuritsu.dev"
+					]
+				}
+			],
+			"triggers": {
+				"crons": [
+					"0 21 * * *"
+				]
+			}
+		}
 	}
 }
