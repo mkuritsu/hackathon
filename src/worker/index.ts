@@ -7,6 +7,7 @@ import { researchApp } from "./research-api";
 import { gatherReportData, generateAndStoreReport, renderReportHtml } from "./report/pdf";
 import { sampleReportData } from "./report/ReportDocument";
 import { runDailyReport } from "./report/run";
+import { sendReportEmail } from "./report/email";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -62,6 +63,25 @@ app.on(["GET", "POST"], "/api/report/pdf", async (c) => {
 			"Content-Disposition": `inline; filename="${key}"`,
 		},
 	});
+});
+
+// Generate the caller's own report, store it in R2, and email the PDF to their
+// address. Powers the Overview "EMAIL REPORT" button so the demo can fire a
+// real send on stage.
+app.post("/api/report/email", async (c) => {
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
+	if (!user.email) {
+		return c.json({ error: "No email on file for this account" }, 400);
+	}
+	const { pdf, key } = await generateAndStoreReport(c.env, { id: user.id, username: user.username });
+	const sent = await sendReportEmail(c.env, user.email, pdf, key);
+	if (!sent) {
+		return c.json({ error: "Report generated but email failed to send", key }, 502);
+	}
+	return c.json({ ok: true, emailed: user.email, key });
 });
 
 // HTML preview of the caller's own report (no browser time used) for

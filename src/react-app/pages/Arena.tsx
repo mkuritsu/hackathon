@@ -1,6 +1,8 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { AGENTS, AGENT_WEIGHT } from "../data/agents";
-import { formatUSD, readAmount } from "../lib/format";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AGENTS } from "../data/agents";
+import * as api from "../lib/api";
+import { buysByAdapter, formatUSD } from "../lib/format";
 
 const ACCENT = {
 	primary: {
@@ -28,11 +30,50 @@ const ACCENT = {
 
 export default function Arena() {
 	const navigate = useNavigate();
-	const [params] = useSearchParams();
-	const deployed = readAmount(params.get("amount"));
+	const [portfolio, setPortfolio] = useState<api.Portfolio | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		api
+			.getPortfolio()
+			.then(setPortfolio)
+			.catch((err) => {
+				if (err instanceof api.ApiError && err.status === 401) {
+					navigate("/", { replace: true });
+					return;
+				}
+				setError("Could not load your desk. Try again.");
+			});
+	}, [navigate]);
+
+	const deployed = portfolio
+		? portfolio.startingCash - portfolio.cash
+		: 0;
+	const byAdapter = portfolio ? buysByAdapter(portfolio.trades) : {};
+	const totalBuys = portfolio
+		? portfolio.trades.filter((t) => t.action === "buy").length
+		: 0;
 
 	function next() {
-		navigate(`/charity?amount=${deployed}`);
+		navigate(`/charity?amount=${Math.round(deployed)}`);
+	}
+
+	if (error) {
+		return (
+			<div className="px-margin-mobile max-w-2xl mx-auto text-center py-16">
+				<p className="font-label-caps text-label-caps text-error">{error}</p>
+			</div>
+		);
+	}
+
+	if (!portfolio) {
+		return (
+			<div className="px-margin-mobile max-w-2xl mx-auto text-center py-16">
+				<p className="font-label-caps text-label-caps text-primary-fixed animate-pulse">
+					LOADING DESK...
+				</p>
+			</div>
+		);
 	}
 
 	return (
@@ -47,8 +88,23 @@ export default function Arena() {
 						{formatUSD(deployed)}
 					</div>
 				</div>
-				<div className="font-label-caps text-label-caps text-on-surface-variant uppercase text-right">
-					{AGENTS.length} AGENTS // SIMULATED BUYS
+				<div className="flex gap-8 text-right">
+					<div>
+						<div className="font-label-caps text-label-caps text-on-surface-variant uppercase">
+							CASH LEFT
+						</div>
+						<div className="font-financial-display text-[24px] text-on-surface">
+							{formatUSD(portfolio.cash)}
+						</div>
+					</div>
+					<div>
+						<div className="font-label-caps text-label-caps text-on-surface-variant uppercase">
+							NAV
+						</div>
+						<div className="font-financial-display text-[24px] text-on-surface">
+							{formatUSD(portfolio.nav)}
+						</div>
+					</div>
 				</div>
 			</section>
 
@@ -59,17 +115,18 @@ export default function Arena() {
 						AGENT BUYS
 					</h2>
 					<span className="font-label-caps text-label-caps text-primary-fixed">
-						PENDING EXECUTION
+						{totalBuys} SIMULATED FILLS
 					</span>
 				</div>
 
 				{AGENTS.map((agent) => {
 					const a = ACCENT[agent.accent];
-					const buyAmount = deployed * AGENT_WEIGHT;
+					const data = byAdapter[agent.adapter];
+					const bought = data && data.instruments.length > 0;
 					return (
 						<div
 							key={agent.rank}
-							className={`relative border-2 ${a.border} bg-surface-container p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group ${a.hoverBorder} transition-colors`}
+							className={`relative border-2 ${a.border} bg-surface-container p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group ${a.hoverBorder} transition-colors ${bought ? "" : "opacity-60"}`}
 						>
 							<div className="flex items-start gap-4 md:max-w-2xl">
 								<div
@@ -95,20 +152,18 @@ export default function Arena() {
 							<div className="flex gap-8 md:flex-col md:gap-1 md:text-right md:min-w-[10rem] shrink-0">
 								<div>
 									<div className="font-label-caps text-label-caps text-on-surface-variant uppercase">
-										BUYS
+										BOUGHT
 									</div>
-									<div
-										className={`font-financial-display text-financial-display ${a.buy}`}
-									>
-										{agent.buy}
+									<div className={`font-financial-display text-financial-display ${a.buy}`}>
+										{bought ? data.instruments.join(", ") : "HELD // NO FILL"}
 									</div>
 								</div>
 								<div>
 									<div className="font-label-caps text-label-caps text-on-surface-variant uppercase">
-										BOUGHT AT
+										NOTIONAL
 									</div>
 									<div className="font-financial-display text-financial-display text-on-surface">
-										{formatUSD(buyAmount)}
+										{formatUSD(data?.notional ?? 0)}
 									</div>
 								</div>
 							</div>
@@ -117,8 +172,8 @@ export default function Arena() {
 				})}
 
 				<p className="font-body-md text-body-md text-on-surface-variant border-l-4 border-secondary pl-4 py-1 mt-2">
-					Each agent's buy is a simulated allocation of your deployed capital. No
-					real trades are placed.
+					Each agent's buy is a real simulated fill committed to your account's
+					ledger in D1. No real trades are placed.
 				</p>
 			</section>
 

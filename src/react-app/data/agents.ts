@@ -1,7 +1,10 @@
+export type MarketKind = "crypto" | "stocks" | "prediction" | "sports";
+
 export type Agent = {
 	rank: string;
 	name: string;
 	market: string;
+	adapter: MarketKind;
 	description: string;
 	buy: string;
 	accent: "primary" | "secondary" | "error";
@@ -15,6 +18,7 @@ export const AGENTS: Agent[] = [
 		rank: "01",
 		name: "DEGEN DAN",
 		market: "MEME COINS",
+		adapter: "crypto",
 		description:
 			"Tracks meme-coin momentum, internet chatter, and peak chaos to hunt the biggest simulated upside.",
 		buy: "$DOGE",
@@ -24,6 +28,7 @@ export const AGENTS: Agent[] = [
 		rank: "02",
 		name: "STONKS SAM",
 		market: "STOCKS & INDEXES",
+		adapter: "stocks",
 		description:
 			"Covers stocks and indexes with just enough research to call himself responsible before making a wildly confident paper trade.",
 		buy: "$NVDA",
@@ -33,6 +38,7 @@ export const AGENTS: Agent[] = [
 		rank: "03",
 		name: "ORACLE OWL",
 		market: "PREDICTION MARKETS",
+		adapter: "prediction",
 		description:
 			"Reads prediction-market probabilities and public signals to find outcomes the crowd may have priced wrong.",
 		buy: "YES // FED CUT",
@@ -42,6 +48,7 @@ export const AGENTS: Agent[] = [
 		rank: "04",
 		name: "ODDS FATHER",
 		market: "SPORTS BETTING",
+		adapter: "sports",
 		description:
 			"Watches sports odds, line movement, and match data to place calculated simulated bets with mafia-level calm.",
 		buy: "LAKERS ML",

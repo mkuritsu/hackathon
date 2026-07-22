@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import * as api from "../lib/api";
 
-// Simulated workflow stages. Swap this for real progress polling
-// (e.g. GET /api/workflow/:id/status) when the Workflow is wired up.
+// Console flavour stages. The animation advances on a timer but pauses at the
+// last stage until the real ResearchWorkflow reports "complete".
 const STAGES = [
 	"FETCHING MARKET UNIVERSE",
 	"PULLING CONTEXT + NEWS FEEDS",
@@ -14,37 +15,75 @@ const STAGES = [
 ];
 
 const STAGE_MS = 850;
+const POLL_MS = 1500;
 const DONE = STAGES.length;
 
 export default function Deploying() {
 	const navigate = useNavigate();
 	const [params] = useSearchParams();
 	const amount = params.get("amount") ?? "";
+	const id = params.get("id") ?? "";
 	// stage counts completed stages: 0..STAGES.length (DONE means finished)
 	const [stage, setStage] = useState(0);
+	const [done, setDone] = useState(false);
+	// Missing id (deep-link without starting a run) is a failure from the start.
+	const [failed, setFailed] = useState(!id);
 	const logRef = useRef<HTMLDivElement>(null);
 
+	// Poll the real workflow status until it finishes (or errors).
 	useEffect(() => {
-		const next = amount ? `/arena?amount=${amount}` : "/arena";
-		const id = setInterval(() => {
-			setStage((s) => {
-				if (s + 1 >= DONE) {
-					clearInterval(id);
-					window.setTimeout(() => navigate(next, { replace: true }), 700);
+		if (!id) {
+			return;
+		}
+		let cancelled = false;
+		const tick = async () => {
+			try {
+				const res = await api.getResearch(id);
+				const status = res.status?.status ?? "";
+				if (cancelled) return;
+				if (status === "complete") {
+					setDone(true);
+				} else if (status === "errored" || status === "terminated") {
+					setFailed(true);
 				}
-				return Math.min(s + 1, DONE);
-			});
-		}, STAGE_MS);
+			} catch {
+				// transient errors are fine; keep polling
+			}
+		};
+		void tick();
+		const poll = setInterval(tick, POLL_MS);
+		return () => {
+			cancelled = true;
+			clearInterval(poll);
+		};
+	}, [id]);
 
-		return () => clearInterval(id);
-	}, [navigate, amount]);
+	// Visual stage animation: advance until the penultimate stage, then hold on
+	// the final stage until the workflow actually completes.
+	useEffect(() => {
+		const anim = setInterval(() => {
+			setStage((s) => Math.min(s + 1, done ? DONE : DONE - 1));
+		}, STAGE_MS);
+		return () => clearInterval(anim);
+	}, [done]);
+
+	// Once complete AND the animation has caught up, route to the arena.
+	useEffect(() => {
+		if (done && stage >= DONE) {
+			const next = amount ? `/arena?amount=${amount}` : "/arena";
+			const t = window.setTimeout(() => navigate(next, { replace: true }), 700);
+			return () => clearTimeout(t);
+		}
+	}, [done, stage, amount, navigate]);
 
 	// Derive the console log from the stage counter (no extra state).
-	const log: { text: string; kind: "done" | "active" | "complete" }[] = [];
+	const log: { text: string; kind: "done" | "active" | "complete" | "error" }[] = [];
 	for (let i = 0; i < Math.min(stage, DONE); i++) {
 		log.push({ text: `> ${STAGES[i]}... OK`, kind: "done" });
 	}
-	if (stage < DONE) {
+	if (failed) {
+		log.push({ text: "> RESEARCH PIPELINE FAILED. RETURN TO DESK.", kind: "error" });
+	} else if (stage < DONE) {
 		log.push({ text: `> ${STAGES[stage]}...`, kind: "active" });
 	} else {
 		log.push({
@@ -55,9 +94,9 @@ export default function Deploying() {
 
 	useEffect(() => {
 		logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-	}, [stage]);
+	}, [stage, failed]);
 
-	const pct = Math.round((stage / DONE) * 100);
+	const pct = failed ? 100 : Math.round((stage / DONE) * 100);
 
 	return (
 		<div className="px-margin-mobile md:px-margin-desktop max-w-3xl mx-auto flex flex-col items-center justify-center gap-8 py-16">
@@ -96,11 +135,13 @@ export default function Deploying() {
 						<div
 							key={i}
 							className={
-								line.kind === "complete"
-									? "text-primary-fixed"
-									: line.kind === "active"
-										? "text-primary-fixed animate-pulse"
-										: "text-on-surface"
+								line.kind === "error"
+									? "text-error"
+									: line.kind === "complete"
+										? "text-primary-fixed"
+										: line.kind === "active"
+											? "text-primary-fixed animate-pulse"
+											: "text-on-surface"
 							}
 						>
 							{line.text}
@@ -129,6 +170,16 @@ export default function Deploying() {
 				The research pipeline is fetching universes across active adapters,
 				reasoning with Workers AI, and committing simulated fills to the ledger.
 			</p>
+
+			{failed && (
+				<button
+					type="button"
+					onClick={() => navigate("/allocate", { replace: true })}
+					className="border-2 border-error text-error bg-surface font-headline-lg text-headline-lg px-8 py-3 uppercase hover:bg-error hover:text-on-error transition-colors"
+				>
+					RETURN TO DESK
+				</button>
+			)}
 		</div>
 	);
 }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AuthModal from "../components/AuthModal";
+import { useAuth } from "../lib/auth";
 
 type AgentRow = {
 	rank: string;
@@ -101,6 +103,16 @@ function useDeskClock() {
 export default function Landing() {
 	const navigate = useNavigate();
 	const clock = useDeskClock();
+	const { user } = useAuth();
+	const [authOpen, setAuthOpen] = useState(false);
+
+	function initializeRun() {
+		if (user) {
+			navigate("/allocate");
+		} else {
+			setAuthOpen(true);
+		}
+	}
 
 	return (
 		<div className="px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 items-center justify-center py-8">
@@ -133,7 +145,7 @@ export default function Landing() {
 				<div className="flex flex-col sm:flex-row gap-4 mt-4">
 					<button
 						type="button"
-						onClick={() => navigate("/allocate")}
+						onClick={initializeRun}
 						className="btn-neon font-headline-lg text-headline-lg px-10 py-5 uppercase flex items-center justify-center gap-3 group"
 					>
 						INITIALIZE RUN
@@ -249,6 +261,15 @@ export default function Landing() {
 					</div>
 				</div>
 			</div>
+
+			<AuthModal
+				open={authOpen}
+				onClose={() => setAuthOpen(false)}
+				onSuccess={() => {
+					setAuthOpen(false);
+					navigate("/allocate");
+				}}
+			/>
 		</div>
 	);
 }

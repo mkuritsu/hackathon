@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import * as api from "../lib/api";
 
 type Stake = {
 	value: number;
@@ -19,6 +20,8 @@ export default function Allocate() {
 	const navigate = useNavigate();
 	const [selected, setSelected] = useState<number | null>(250);
 	const [custom, setCustom] = useState("");
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	function pick(value: number) {
 		setSelected(value);
@@ -31,11 +34,25 @@ export default function Allocate() {
 	}
 
 	const amount = custom.trim() ? Number(custom) : (selected ?? 0);
-	const canDeploy = Number.isFinite(amount) && amount > 0;
+	const canDeploy = Number.isFinite(amount) && amount > 0 && !busy;
 
-	function deploy() {
+	async function deploy() {
 		if (!canDeploy) return;
-		navigate(`/deploying?amount=${amount}`);
+		setBusy(true);
+		setError(null);
+		try {
+			// Kick off the real ResearchWorkflow; the analyst reasons across every
+			// market and commits simulated fills into this operator's account.
+			const run = await api.runResearch();
+			navigate(`/deploying?id=${encodeURIComponent(run.id)}&amount=${amount}`);
+		} catch (err) {
+			const message =
+				err instanceof api.ApiError && err.status === 401
+					? "Session expired. Head back and re-enter the desk."
+					: "Failed to start the run. Try again.";
+			setError(message);
+			setBusy(false);
+		}
 	}
 
 	return (
@@ -173,13 +190,18 @@ export default function Allocate() {
 			</div>
 
 			{/* Deploy */}
+			{error && (
+				<div className="w-full max-w-md mb-4 border border-error bg-error/10 text-error font-label-caps text-label-caps px-3 py-2 text-center">
+					{error}
+				</div>
+			)}
 			<button
 				type="button"
 				onClick={deploy}
 				disabled={!canDeploy}
 				className="w-full max-w-md border-2 border-primary-fixed bg-surface text-primary-fixed font-headline-lg text-headline-lg py-4 hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors active:scale-95 neon-glow-primary disabled:opacity-40 disabled:cursor-not-allowed"
 			>
-				DEPLOY AGENTS
+				{busy ? "DEPLOYING..." : "DEPLOY AGENTS"}
 			</button>
 		</div>
 	);

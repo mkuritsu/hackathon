@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../lib/auth";
 
 const TICKER_ITEMS = [
 	{ label: "AGENT_ALPHA: +420.69%", loss: false },
@@ -9,6 +10,16 @@ const TICKER_ITEMS = [
 ];
 
 export default function Header() {
+	const { user, logout } = useAuth();
+	const navigate = useNavigate();
+
+	async function handleAuthButton() {
+		if (user) {
+			await logout();
+		}
+		navigate("/");
+	}
+
 	return (
 		<header className="fixed top-0 left-0 w-full z-40 bg-surface">
 			{/* Top stats ticker */}
@@ -48,9 +59,10 @@ export default function Header() {
 				<div className="flex items-center gap-4">
 					<button
 						type="button"
+						onClick={handleAuthButton}
 						className="hidden sm:block font-label-caps text-label-caps text-primary-fixed border border-primary-fixed/30 px-3 py-1 hover:bg-primary-fixed/10 transition-all"
 					>
-						CONNECT WALLET
+						{user ? `${user.username.toUpperCase()} // LOGOUT` : "CONNECT WALLET"}
 					</button>
 					<button
 						type="button"
