@@ -44,10 +44,20 @@
 | 8 | **Browser Rendering** | HTML → **PDF** daily report (with embedded charts) |
 | 9 | **Containers** | **FFmpeg** video pipeline — scaffolded but deferred (no video content yet) |
 | 10 | **Durable Objects** | The live "fund brain": hot state, coordinates the loop, kicks off Workflows, serves WebSocket to Pages |
+| 11 | **KV** | Centralized model registry (`MODELS` namespace, key `models`): declare/read model ids once, swap models via config not code |
 
-> Deliberately not in scope (to keep the list curated): Queues, Vectorize, KV,
+> Deliberately not in scope (to keep the list curated): Queues, Vectorize,
 > AI Gateway, MCP. Workflows owns orchestration + durability; D1 holds all state;
 > cron is a Workers feature (implicit).
+
+### Local dev / accounts (per-person)
+- Each dev uses their own Cloudflare account: `wrangler login`, then wrangler
+  targets it. Local dev uses local D1/KV, so the resource ids in
+  `wrangler.jsonc` (D1 `database_id`, KV `id`) are ignored with `--local`.
+- The `AI` binding always connects to a **remote** account even in local dev,
+  so you must be logged into an account with Workers AI.
+- Resource ids committed in `wrangler.jsonc` point at individual dev accounts
+  for now; consolidate to one account before the shared demo deploy.
 
 ---
 
@@ -104,11 +114,17 @@ options, sports) for breadth to prove extensibility.
 ---
 
 ## Data model (D1, draft)
-- `positions(id, adapter, instrument, qty, avg_price, opened_at)`
-- `trades(id, ts, adapter, instrument, action, qty, price, thesis, confidence)`
-- `nav_snapshots(ts, cash, positions_value, nav)` — P&L over time
-- `agent_pnl(adapter, realized_pnl, unrealized_pnl, trade_count)` — leaderboard
-- `config(key, value)` — mandate, starting cash, cadence, recipients
+- `accounts(user_id, starting_cash, cash, created_at)` — per-user fund balance
+- `positions(id, user_id, adapter, instrument, qty, avg_price, opened_at)`
+- `trades(id, user_id, ts, adapter, instrument, action, qty, price, thesis, confidence)`
+- `nav_snapshots(user_id, ts, cash, positions_value, nav)` — per-user P&L over time
+- `agent_pnl(user_id, adapter, realized_pnl, unrealized_pnl, trade_count)` — per-user leaderboard
+- `config(key, value)` — mandate, cadence (global)
+
+> Per-user funds (migration 0004): each registered user is their own simulated
+> fund starting at $100k. Cash, positions, trades, NAV history, and the
+> per-market leaderboard are all scoped by `user_id`, and reports are generated,
+> stored in R2 (`report-{userId}-{date}.pdf`), and emailed per account.
 
 ---
 
@@ -195,3 +211,20 @@ Nail the shared contracts first so everyone builds in parallel against stubs.
 - [seed] Daily end-of-day email: trades, per-trade P&L, EOD balance.
 - [seed] Daily PDF report via Browser Rendering with embedded R2 charts.
 - [seed] Deferred: Containers/FFmpeg daily recap video stored in R2.
+- [added] KV model registry: centralize model ids in KV so models are swappable
+  via config, not code (also one more Cloudflare product). GET /api/models.
+- [added] One analyst impl run as 4 market-scoped instances (crypto/meme,
+  stocks, prediction, sports) with per-market personas; one free source each
+  (CoinGecko, Yahoo, Polymarket, ESPN). Orchestrator ranks non-hold pitches by
+  confidence into "final calls".
+- [added] Execution model (POC): a single frontend button press triggers one
+  research cycle that executes the final buy/sells immediately (confidence-scaled
+  sizing) into D1 (positions/trades/cash), then holds. GET /api/portfolio feeds
+  the frontend from D1 (cash, positions, cost-basis NAV, trades).
+- [added] Per-user funds (migration 0004): every registered user is their own
+  simulated fund ($100k start). Cash/positions/trades/NAV/leaderboard are scoped
+  by user_id; research trades into the caller's account; /api/portfolio and all
+  report routes are auth-scoped. Reports are generated + stored in R2 as
+  `report-{userId}-{date}.pdf` and emailed to each user (their own only).
+- [future] End-of-month liquidation + final report: NOT implemented
+  (ledger.liquidateAndReport is a stub). Mark-to-market NAV also future.
