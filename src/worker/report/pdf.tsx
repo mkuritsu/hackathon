@@ -10,6 +10,19 @@ export function renderReportHtml(data: ReportData): string {
 	return "<!doctype html>" + renderToStaticMarkup(<ReportDocument data={data} />);
 }
 
+// Generate the daily report PDF from D1 state and store it in R2, keyed by the
+// generation date. Returns the PDF bytes and the R2 key. Shared by the HTTP
+// route and the scheduled (cron) handler.
+export async function generateAndStoreReport(
+	env: Env,
+): Promise<{ pdf: Uint8Array; key: string }> {
+	const data = await gatherReportData(env.ACCOUNTS_DB);
+	const pdf = await renderReportPdf(env.BROWSER, data);
+	const key = `fund-report-${data.generatedAt.slice(0, 10)}.pdf`;
+	await env.REPORTS.put(key, pdf, { httpMetadata: { contentType: "application/pdf" } });
+	return { pdf, key };
+}
+
 export async function renderReportPdf(
 	browser: BrowserRun,
 	data: ReportData,

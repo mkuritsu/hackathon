@@ -31,5 +31,10 @@
 			"binding": "REPORTS",
 			"bucket_name": "hackathon-reports"
 		}
-	]
+	],
+	"triggers": {
+		"crons": [
+			"0 21 * * *"
+		]
+	}
 }

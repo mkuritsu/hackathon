@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { authApp, sessionCookieMiddleware } from "./auth";
-import { gatherReportData, renderReportHtml, renderReportPdf } from "./report/pdf";
+import { gatherReportData, generateAndStoreReport, renderReportHtml } from "./report/pdf";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -20,17 +20,12 @@ app.route("/api/auth", authApp);
 // trigger) gathers the fund state from D1, renders the React report, and returns
 // the generated PDF.
 app.on(["GET", "POST"], "/api/report/pdf", async (c) => {
-	const data = await gatherReportData(c.env.ACCOUNTS_DB);
-	const pdf = await renderReportPdf(c.env.BROWSER, data);
-	const filename = `fund-report-${data.generatedAt.slice(0, 10)}.pdf`;
-	await c.env.REPORTS.put(filename, pdf, {
-		httpMetadata: { contentType: "application/pdf" },
-	});
+	const { pdf, key } = await generateAndStoreReport(c.env);
 	return new Response(pdf, {
 		status: 200,
 		headers: {
 			"Content-Type": "application/pdf",
-			"Content-Disposition": `inline; filename="${filename}"`,
+			"Content-Disposition": `inline; filename="${key}"`,
 		},
 	});
 });
@@ -74,4 +69,10 @@ app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
 
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
-export default app;
+export default {
+	fetch: app.fetch,
+	// Daily cron: generate and store the report in R2.
+	async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+		ctx.waitUntil(generateAndStoreReport(env));
+	},
+} satisfies ExportedHandler<Env>;

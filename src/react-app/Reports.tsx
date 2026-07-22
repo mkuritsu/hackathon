@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
 
 type Report = { key: string; size: number; uploaded: string };
 
@@ -83,8 +84,14 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 									{formatDate(report.uploaded)} · {formatSize(report.size)}
 								</time>
 							</div>
-							<a href={`/api/reports/${encodeURIComponent(report.key)}`} download>
-								Download
+							<a
+								className="icon-button"
+								href={`/api/reports/${encodeURIComponent(report.key)}`}
+								download
+								aria-label={`Download ${report.key}`}
+								title="Download"
+							>
+								<Download size={18} aria-hidden="true" />
 							</a>
 						</div>
 					))}
