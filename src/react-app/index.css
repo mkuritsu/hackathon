@@ -69,6 +69,37 @@ main {
 	margin-bottom: 0.5rem;
 }
 
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0.25rem;
+	margin-bottom: 1.5rem;
+	background: rgba(0, 0, 0, 0.25);
+	border: 1px solid #302e2a;
+	border-radius: 0.7rem;
+}
+
+.tabs .tab {
+	flex: 1;
+	padding: 0.6rem 0.75rem;
+	border: 0;
+	border-radius: 0.5rem;
+	color: #928d84;
+	background: transparent;
+	cursor: pointer;
+	font: 600 0.85rem/1 "Manrope", sans-serif;
+}
+
+.tabs .tab:hover:not(.active) {
+	color: #f7f4ed;
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.tabs .tab.active {
+	color: #17120e;
+	background: #f6821f;
+}
+
 .auth-card .intro {
 	margin: 0.5rem 0 2rem;
 	font-size: 0.95rem;
@@ -196,6 +227,29 @@ a:focus-visible {
 
 .result strong {
 	color: #f7f4ed;
+}
+
+.icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: 0.6rem;
+	color: #f7f4ed;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid #45423d;
+	cursor: pointer;
+	flex-shrink: 0;
+	transition:
+		border-color 150ms ease,
+		background 150ms ease;
+}
+
+.icon-button:hover {
+	border-color: #f6821f;
+	color: #f6821f;
+	background: rgba(246, 130, 31, 0.08);
 }
 
 .status-dot {
