@@ -1,86 +1,85 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Login from "./Login";
 
-type ApiStatus = {
-	message: string;
-	status: "ok";
-	timestamp: string;
-};
+const USERNAME_KEY = "hfoa.username";
+
+type AuthState =
+	| { status: "loading" }
+	| { status: "anonymous" }
+	| { status: "authenticated"; username: string };
 
 export default function App() {
-	const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
-	const [error, setError] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
+	const [auth, setAuth] = useState<AuthState>({ status: "loading" });
 
-	async function checkApi() {
-		setIsLoading(true);
-		setError("");
+	useEffect(() => {
+		let active = true;
 
-		try {
-			const response = await fetch("/api/health");
-
-			if (!response.ok) {
-				throw new Error(`API returned ${response.status}`);
+		(async () => {
+			try {
+				const response = await fetch("/api/auth/me");
+				if (active && response.ok) {
+					const data = (await response.json()) as { user: { username: string } };
+					localStorage.setItem(USERNAME_KEY, data.user.username);
+					setAuth({ status: "authenticated", username: data.user.username });
+					return;
+				}
+			} catch {
+				// fall through to anonymous
 			}
+			if (active) {
+				setAuth({ status: "anonymous" });
+			}
+		})();
 
-			setApiStatus((await response.json()) as ApiStatus);
-		} catch (requestError) {
-			setApiStatus(null);
-			setError(
-				requestError instanceof Error ? requestError.message : "Request failed",
-			);
-		} finally {
-			setIsLoading(false);
-		}
+		return () => {
+			active = false;
+		};
+	}, []);
+
+	function handleLoggedIn(username: string) {
+		localStorage.setItem(USERNAME_KEY, username);
+		setAuth({ status: "authenticated", username });
+	}
+
+	async function handleLogout() {
+		await fetch("/api/auth/logout", { method: "POST" });
+		setAuth({ status: "anonymous" });
+	}
+
+	if (auth.status === "loading") {
+		return <main className="auth" aria-busy="true" />;
+	}
+
+	if (auth.status === "anonymous") {
+		return (
+			<Login
+				initialUsername={localStorage.getItem(USERNAME_KEY) ?? ""}
+				onLoggedIn={handleLoggedIn}
+			/>
+		);
 	}
 
 	return (
 		<main>
 			<section className="hero">
-				<p className="eyebrow">Cloudflare Workers + React</p>
-				<h1>One project, edge to interface.</h1>
+				<p className="eyebrow">Hedge Fund of Agents</p>
+				<h1>Welcome, {auth.username}.</h1>
 				<p className="intro">
-					The frontend is built with React and Vite. The API runs in the
-					Cloudflare Workers runtime and ships with the same deployment.
+					You are signed in to the trading desk. The autonomous fund runs on
+					Cloudflare and all trades are simulated.
 				</p>
 
 				<div className="actions">
-					<button type="button" onClick={checkApi} disabled={isLoading}>
-						{isLoading ? "Checking..." : "Check Worker API"}
+					<button type="button" onClick={handleLogout}>
+						Sign out
 					</button>
-					<a
-						href="https://developers.cloudflare.com/workers/"
-						target="_blank"
-						rel="noreferrer"
-					>
-						Workers docs
-					</a>
-				</div>
-
-				<div className="result" aria-live="polite">
-					{apiStatus && (
-						<>
-							<span className="status-dot" />
-							<div>
-								<strong>{apiStatus.message}</strong>
-								<time dateTime={apiStatus.timestamp}>
-									{new Date(apiStatus.timestamp).toLocaleString()}
-								</time>
-							</div>
-						</>
-					)}
-					{error && <strong className="error">{error}</strong>}
-					{!apiStatus && !error && "The API is ready for a health check."}
 				</div>
 			</section>
 
 			<aside>
-				<span>Project structure</span>
-				<code>src/react-app</code>
-				<p>React frontend</p>
-				<code>src/worker</code>
-				<p>Worker backend</p>
-				<code>wrangler.jsonc</code>
-				<p>Cloudflare configuration</p>
+				<span>Signed in as</span>
+				<code>{auth.username}</code>
+				<p>Session stored in an HttpOnly cookie</p>
 			</aside>
 		</main>
 	);

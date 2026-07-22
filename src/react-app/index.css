@@ -46,6 +46,63 @@ main {
 	max-width: 47rem;
 }
 
+.auth {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	grid-template-columns: none;
+}
+
+.auth-card {
+	display: flex;
+	flex-direction: column;
+	width: min(26rem, calc(100% - 3rem));
+	padding: 2.5rem;
+	border: 1px solid #302e2a;
+	border-radius: 1rem;
+	background: rgba(255, 255, 255, 0.025);
+}
+
+.auth-card h1 {
+	font-size: clamp(2.2rem, 6vw, 3rem);
+	margin-bottom: 0.5rem;
+}
+
+.auth-card .intro {
+	margin: 0.5rem 0 2rem;
+	font-size: 0.95rem;
+}
+
+.auth-card label {
+	margin-bottom: 0.5rem;
+	font: 500 0.75rem/1.4 "DM Mono", monospace;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #928d84;
+}
+
+.auth-card input {
+	margin-bottom: 1.5rem;
+	padding: 0.85rem 1rem;
+	font: inherit;
+	color: #f7f4ed;
+	background: rgba(0, 0, 0, 0.25);
+	border: 1px solid #45423d;
+	border-radius: 0.6rem;
+}
+
+.auth-card input:focus-visible {
+	outline: none;
+	border-color: #f6821f;
+}
+
+.auth-card .error {
+	margin-top: 1rem;
+	font: 400 0.82rem/1.5 "DM Mono", monospace;
+	color: #ff8b7c;
+}
+
 .eyebrow,
 aside span {
 	margin: 0 0 1.5rem;
