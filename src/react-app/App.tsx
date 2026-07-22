@@ -70,6 +70,9 @@ export default function App() {
 				</p>
 
 				<div className="actions">
+					<a href="/api/report/preview" target="_blank" rel="noreferrer">
+						View report preview
+					</a>
 					<button type="button" onClick={handleLogout}>
 						Sign out
 					</button>
