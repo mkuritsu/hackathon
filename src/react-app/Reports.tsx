@@ -18,20 +18,23 @@ const formatDate = (iso: string) => new Date(iso).toLocaleString();
 
 export default function Reports({ onBack }: { onBack: () => void }) {
 	const [state, setState] = useState<LoadState>({ status: "loading" });
+	const [generating, setGenerating] = useState(false);
+	const [generateError, setGenerateError] = useState("");
+
+	async function loadReports() {
+		const response = await fetch("/api/reports");
+		if (!response.ok) {
+			throw new Error(`Failed to load reports (${response.status})`);
+		}
+		const data = (await response.json()) as { reports: Report[] };
+		setState({ status: "loaded", reports: data.reports });
+	}
 
 	useEffect(() => {
 		let active = true;
-
 		(async () => {
 			try {
-				const response = await fetch("/api/reports");
-				if (!response.ok) {
-					throw new Error(`Failed to load reports (${response.status})`);
-				}
-				const data = (await response.json()) as { reports: Report[] };
-				if (active) {
-					setState({ status: "loaded", reports: data.reports });
-				}
+				await loadReports();
 			} catch (error) {
 				if (active) {
 					setState({
@@ -41,11 +44,39 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 				}
 			}
 		})();
-
 		return () => {
 			active = false;
 		};
 	}, []);
+
+	async function generateReport() {
+		setGenerating(true);
+		setGenerateError("");
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 90_000);
+		try {
+			const response = await fetch("/api/report/pdf", {
+				method: "POST",
+				signal: controller.signal,
+			});
+			if (!response.ok) {
+				throw new Error(`Failed to generate report (${response.status})`);
+			}
+			await loadReports();
+		} catch (error) {
+			const aborted = error instanceof DOMException && error.name === "AbortError";
+			setGenerateError(
+				aborted
+					? "Timed out after 90s"
+					: error instanceof Error
+						? error.message
+						: "Failed to generate report",
+			);
+		} finally {
+			clearTimeout(timeout);
+			setGenerating(false);
+		}
+	}
 
 	return (
 		<main>
@@ -71,7 +102,19 @@ export default function Reports({ onBack }: { onBack: () => void }) {
 				)}
 
 				{state.status === "loaded" && state.reports.length === 0 && (
-					<p className="result">No reports generated yet.</p>
+					<div className="result" style={{ flexDirection: "column", alignItems: "stretch" }}>
+						<div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+							<span style={{ flex: 1 }}>No reports generated yet.</span>
+							<button type="button" onClick={generateReport} disabled={generating}>
+								{generating ? "Generating..." : "Generate report"}
+							</button>
+						</div>
+						{generateError && (
+							<strong className="error" style={{ marginTop: "0.75rem" }}>
+								{generateError}
+							</strong>
+						)}
+					</div>
 				)}
 
 				{state.status === "loaded" &&
