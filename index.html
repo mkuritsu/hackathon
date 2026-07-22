@@ -1,13 +1,117 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
-			content="React frontend with a Cloudflare Workers backend"
+			content="W Yields - autonomous AI trading desk on Cloudflare. All trades simulated."
 		/>
-		<title>Cloudflare Full Stack</title>
+		<title>W YIELDS // Unhinged Markets. Collective Good.</title>
+
+		<!-- Fonts: Anton (headlines), Inter (body), Space Mono (numbers/labels) -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!-- Tailwind Play CDN -->
+		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+		<script id="tailwind-config">
+			tailwind.config = {
+				darkMode: "class",
+				theme: {
+					extend: {
+						colors: {
+							"on-primary-fixed-variant": "#3c4d00",
+							"secondary-fixed-dim": "#e3b5ff",
+							"secondary-container": "#9400e4",
+							"on-error-container": "#ffdad6",
+							"on-tertiary-container": "#c60061",
+							surface: "#131315",
+							"surface-container-high": "#2a2a2c",
+							"on-primary-container": "#556d00",
+							"surface-container": "#201f21",
+							"on-tertiary-fixed": "#3f001a",
+							"on-secondary-container": "#f0d2ff",
+							tertiary: "#ffffff",
+							"inverse-on-surface": "#313032",
+							outline: "#8e9379",
+							"surface-dim": "#131315",
+							"on-primary-fixed": "#161e00",
+							"on-surface-variant": "#c4c9ac",
+							"on-tertiary": "#65002e",
+							"surface-tint": "#abd600",
+							"error-container": "#93000a",
+							"on-background": "#e5e1e4",
+							"tertiary-container": "#ffd9e1",
+							"surface-variant": "#353437",
+							"surface-bright": "#39393b",
+							"on-tertiary-fixed-variant": "#8f0044",
+							"outline-variant": "#444933",
+							"surface-container-lowest": "#0e0e10",
+							"primary-fixed": "#c3f400",
+							"surface-container-highest": "#353437",
+							primary: "#ffffff",
+							"tertiary-fixed": "#ffd9e1",
+							"surface-container-low": "#1c1b1d",
+							"secondary-fixed": "#f3daff",
+							background: "#131315",
+							"on-primary": "#283500",
+							"tertiary-fixed-dim": "#ffb1c4",
+							"primary-fixed-dim": "#abd600",
+							"on-surface": "#e5e1e4",
+							secondary: "#e3b5ff",
+							error: "#ffb4ab",
+							"inverse-primary": "#506600",
+							"on-secondary-fixed": "#2f004c",
+							"on-secondary-fixed-variant": "#6e00ab",
+							"on-secondary": "#4d007a",
+							"primary-container": "#c3f400",
+							"inverse-surface": "#e5e1e4",
+							"on-error": "#690005",
+							"acid-lime": "#c3f400",
+							"hot-pink": "#ff1493"
+						},
+						borderRadius: {
+							DEFAULT: "0.25rem",
+							lg: "0.5rem",
+							xl: "0.75rem",
+							full: "9999px"
+						},
+						spacing: {
+							"margin-mobile": "12px",
+							unit: "4px",
+							"margin-desktop": "24px",
+							gutter: "16px",
+							"border-width": "2px"
+						},
+						fontFamily: {
+							"label-caps": ["Space Mono"],
+							"body-md": ["Inter"],
+							"headline-lg-mobile": ["Anton"],
+							"headline-xl": ["Anton"],
+							"financial-display": ["Space Mono"],
+							"headline-lg": ["Anton"]
+						},
+						fontSize: {
+							"label-caps": ["12px", { lineHeight: "1", letterSpacing: "0.1em", fontWeight: "700" }],
+							"body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+							"headline-lg-mobile": ["28px", { lineHeight: "1.2", fontWeight: "400" }],
+							"headline-xl": ["48px", { lineHeight: "1.1", letterSpacing: "0.02em", fontWeight: "400" }],
+							"financial-display": ["24px", { lineHeight: "1.2", fontWeight: "700" }],
+							"headline-lg": ["32px", { lineHeight: "1.2", letterSpacing: "0.02em", fontWeight: "400" }]
+						}
+					}
+				}
+			};
+		</script>
 	</head>
 	<body>
 		<div id="root"></div>

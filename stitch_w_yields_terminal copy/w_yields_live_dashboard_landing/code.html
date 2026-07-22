@@ -1,0 +1,366 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>W Yields - Unhinged Markets. Collective Good.</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Inter:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#3c4d00",
+                      "secondary-fixed-dim": "#e3b5ff",
+                      "secondary-container": "#9400e4",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-container": "#c60061",
+                      "surface": "#131315",
+                      "surface-container-high": "#2a2a2c",
+                      "on-primary-container": "#556d00",
+                      "surface-container": "#201f21",
+                      "on-tertiary-fixed": "#3f001a",
+                      "on-secondary-container": "#f0d2ff",
+                      "tertiary": "#ffffff",
+                      "inverse-on-surface": "#313032",
+                      "outline": "#8e9379",
+                      "surface-dim": "#131315",
+                      "on-primary-fixed": "#161e00",
+                      "on-surface-variant": "#c4c9ac",
+                      "on-tertiary": "#65002e",
+                      "surface-tint": "#abd600",
+                      "error-container": "#93000a",
+                      "on-background": "#e5e1e4",
+                      "tertiary-container": "#ffd9e1",
+                      "surface-variant": "#353437",
+                      "surface-bright": "#39393b",
+                      "on-tertiary-fixed-variant": "#8f0044",
+                      "outline-variant": "#444933",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-fixed": "#c3f400",
+                      "surface-container-highest": "#353437",
+                      "primary": "#ffffff",
+                      "tertiary-fixed": "#ffd9e1",
+                      "surface-container-low": "#1c1b1d",
+                      "secondary-fixed": "#f3daff",
+                      "background": "#131315",
+                      "on-primary": "#283500",
+                      "tertiary-fixed-dim": "#ffb1c4",
+                      "primary-fixed-dim": "#abd600",
+                      "on-surface": "#e5e1e4",
+                      "secondary": "#e3b5ff",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#506600",
+                      "on-secondary-fixed": "#2f004c",
+                      "on-secondary-fixed-variant": "#6e00ab",
+                      "on-secondary": "#4d007a",
+                      "primary-container": "#c3f400",
+                      "inverse-surface": "#e5e1e4",
+                      "on-error": "#690005",
+                      "acid-lime": "#c3f400",
+                      "hot-pink": "#ff1493"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "12px",
+                      "unit": "4px",
+                      "margin-desktop": "24px",
+                      "gutter": "16px",
+                      "border-width": "2px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Space Mono"],
+                      "body-md": ["Inter"],
+                      "headline-lg-mobile": ["Anton"],
+                      "headline-xl": ["Anton"],
+                      "financial-display": ["Space Mono"],
+                      "headline-lg": ["Anton"]
+              },
+              "fontSize": {
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                      "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                      "financial-display": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.1) 50%,
+                rgba(0, 0, 0, 0.1)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: theme('colors.surface-container-highest');
+            border-bottom: 2px solid theme('colors.primary-fixed');
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            padding-right: 100%;
+            box-sizing: content-box;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-name: ticker;
+            animation-duration: 20s;
+        }
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+            color: theme('colors.primary-fixed');
+            font-family: 'Space Mono', monospace;
+            font-weight: bold;
+        }
+        .ticker-item.loss {
+            color: theme('colors.error');
+        }
+        
+        .sticker-rotate-1 { transform: rotate(-3deg); }
+        .sticker-rotate-2 { transform: rotate(2deg); }
+        
+        .neon-border {
+            border: 2px solid theme('colors.primary-fixed');
+            box-shadow: 0 0 10px rgba(195, 244, 0, 0.2);
+        }
+        
+        .btn-neon {
+            border: 2px solid theme('colors.primary-fixed');
+            background: theme('colors.surface');
+            color: theme('colors.primary-fixed');
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-neon:hover {
+            background: theme('colors.primary-fixed');
+            color: theme('colors.on-primary-fixed');
+            box-shadow: 0 0 20px rgba(195, 244, 0, 0.6);
+        }
+        
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+        
+        .data-stream-pulse {
+            animation: data-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes data-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen relative overflow-x-hidden">
+<!-- CRT Scanlines Overlay -->
+<div class="scanlines fixed inset-0 z-50 mix-blend-overlay"></div>
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 w-full z-40 bg-surface">
+<div class="ticker-wrap h-8 flex items-center">
+<div class="ticker font-label-caps text-label-caps">
+<span class="ticker-item">AGENT_ALPHA: +420.69%</span>
+<span class="ticker-item loss">AGENT_BETA: -18.4%</span>
+<span class="ticker-item">POOL_TVL: $1.33B</span>
+<span class="ticker-item">CHARITY_YIELD: $2.4M</span>
+<span class="ticker-item loss">SHORTS_REKT: 42.1K</span>
+<span class="ticker-item">AGENT_ALPHA: +420.69%</span>
+<span class="ticker-item loss">AGENT_BETA: -18.4%</span>
+</div>
+</div>
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 border-b-2 border-primary-fixed bg-surface noise-bg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed" style="font-variation-settings: 'FILL' 1;">sensors</span>
+<h1 class="font-headline-lg text-headline-lg text-primary-fixed italic uppercase m-0 leading-none">W YIELDS</h1>
+</div>
+<div class="hidden lg:flex font-label-caps text-[10px] text-on-surface-variant gap-6 uppercase tracking-widest">
+<span>Infrastructure: Verified</span>
+<span>Oracle: Latency 14ms</span>
+<span>Protocol: V2.4.0</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden sm:block font-label-caps text-label-caps text-primary-fixed border border-primary-fixed/30 px-3 py-1 hover:bg-primary-fixed/10 transition-all">
+                    CONNECT WALLET
+                </button>
+<button class="material-symbols-outlined text-primary-fixed hover:bg-primary-fixed hover:text-on-primary-fixed p-2 transition-all">
+                    menu
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto min-h-screen flex flex-col lg:flex-row gap-12 items-center justify-center relative z-10">
+<!-- Left: Value Proposition -->
+<div class="flex-1 flex flex-col gap-8 relative z-20">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-highest border border-primary-fixed/20 rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-primary-fixed data-stream-pulse"></span>
+<span class="font-label-caps text-[10px] text-primary-fixed tracking-widest">NETWORK LIVE // AGENTS DEPLOYED</span>
+</div>
+<h2 class="font-headline-xl text-headline-xl text-primary md:text-[80px] leading-[0.9] uppercase relative">
+                EXPLOITING THE <br>
+<span class="text-secondary">ALGORITHMIC</span> <br>
+<span class="text-primary-fixed border-b-4 border-primary-fixed">CHAOS.</span> <br>
+                FOR HUMANITY.
+            </h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl border-l-4 border-secondary pl-4 py-1">
+                W Yields deploys high-frequency AI agents into extreme volatility meme markets. Our proprietary swarm logic extracts value from irrationality, redirecting execution profits to verified global impact initiatives. 
+            </p>
+<div class="flex flex-col sm:flex-row gap-4 mt-4">
+<button class="btn-neon font-headline-lg text-headline-lg px-10 py-5 uppercase flex items-center justify-center gap-3 group">
+                    INITIALIZE RUN
+                    <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">rocket_launch</span>
+</button>
+<button class="font-headline-lg text-headline-lg px-10 py-5 uppercase border-2 border-surface-container-highest hover:bg-surface-container-highest transition-all">
+                    VIEW AUDITS
+                </button>
+</div>
+<div class="flex items-center gap-8 mt-4">
+<div>
+<div class="font-financial-display text-primary">$1.4B+</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant">TOTAL VOLUME</div>
+</div>
+<div>
+<div class="font-financial-display text-secondary">842K</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant">AGENT EXECUTIONS</div>
+</div>
+<div>
+<div class="font-financial-display text-primary-fixed">$22M</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant">CHARITY DONATED</div>
+</div>
+</div>
+</div>
+<!-- Right: Real-time Dashboard -->
+<div class="flex-1 w-full max-w-xl relative z-10">
+<div class="bg-surface-container border-2 border-primary-fixed p-1 noise-bg relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<!-- Status Bar -->
+<div class="bg-surface-container-lowest border-b-2 border-primary-fixed p-3 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary-fixed rounded-full animate-pulse shadow-[0_0_8px_#c3f400]"></div>
+<span class="font-label-caps text-[11px] text-primary-fixed tracking-tighter">NODE_LIVE // SECTOR_07</span>
+</div>
+<span class="font-financial-display text-[20px] text-primary-fixed tracking-widest">23:08:52:04</span>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<!-- Agent Stream 1 -->
+<div class="flex justify-between items-center bg-surface-container-high p-4 border-l-4 border-primary-fixed hover:bg-surface-container-highest transition-all group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-lowest w-10 h-10 flex items-center justify-center font-headline-lg-mobile text-primary-fixed border border-primary-fixed/20">
+                                01
+                            </div>
+<div>
+<div class="font-label-caps text-label-caps text-primary group-hover:text-primary-fixed transition-colors">ALPHA_DOGE_V4</div>
+<div class="font-label-caps text-[9px] text-on-surface-variant tracking-widest mt-1">HFT // AGGRESSIVE ARB</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-financial-display text-[22px] text-primary-fixed">+8,420.1%</div>
+<div class="font-label-caps text-[9px] text-primary-fixed/60 uppercase">Realized ROI</div>
+</div>
+</div>
+<!-- Agent Stream 2 -->
+<div class="flex justify-between items-center bg-surface-container-high p-4 border-l-4 border-secondary hover:bg-surface-container-highest transition-all group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-lowest w-10 h-10 flex items-center justify-center font-headline-lg-mobile text-secondary border border-secondary/20">
+                                02
+                            </div>
+<div>
+<div class="font-label-caps text-label-caps text-primary group-hover:text-secondary transition-colors">QUANT_PEPE_ULTRA</div>
+<div class="font-label-caps text-[9px] text-on-surface-variant tracking-widest mt-1">NEURAL // SENTIMENT_SWARM</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-financial-display text-[22px] text-secondary">+1,204.4%</div>
+<div class="font-label-caps text-[9px] text-secondary/60 uppercase">Realized ROI</div>
+</div>
+</div>
+<!-- Agent Stream 3 -->
+<div class="flex justify-between items-center bg-surface-container-high p-4 border-l-4 border-surface-variant hover:bg-surface-container-highest transition-all group cursor-pointer opacity-80">
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-lowest w-10 h-10 flex items-center justify-center font-headline-lg-mobile text-on-surface-variant border border-on-surface-variant/20">
+                                03
+                            </div>
+<div>
+<div class="font-label-caps text-label-caps text-primary">YIELD_FARMER_X</div>
+<div class="font-label-caps text-[9px] text-on-surface-variant tracking-widest mt-1">DELTA_NEUTRAL // STAKING</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-financial-display text-[22px] text-on-surface-variant">+42.8%</div>
+<div class="font-label-caps text-[9px] text-on-surface-variant/60 uppercase">Realized ROI</div>
+</div>
+</div>
+<!-- Agent Stream 4 -->
+<div class="flex justify-between items-center bg-surface-container-high p-4 border-l-4 border-error hover:bg-surface-container-highest transition-all group cursor-pointer relative overflow-hidden">
+<div class="absolute inset-0 bg-error/5"></div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="bg-surface-container-lowest w-10 h-10 flex items-center justify-center font-headline-lg-mobile text-error border border-error/20">
+                                04
+                            </div>
+<div>
+<div class="font-label-caps text-label-caps text-error">BEAR_TRAP_99</div>
+<div class="font-label-caps text-[9px] text-on-surface-variant tracking-widest mt-1">CONTRA // REVERSION</div>
+</div>
+</div>
+<div class="text-right relative z-10">
+<div class="font-financial-display text-[22px] text-error">-99.9%</div>
+<div class="font-label-caps text-[9px] text-error/60 uppercase">LIQUIDATED</div>
+</div>
+</div>
+</div>
+<!-- Footer Data Bar -->
+<div class="p-3 bg-surface-container-lowest border-t border-primary-fixed/20 flex justify-between items-center font-label-caps text-[9px] text-on-surface-variant uppercase tracking-tighter">
+<span>Block: #19482751</span>
+<span>Gas: 12 Gwei</span>
+<span class="text-primary-fixed">Slippage: 0.05%</span>
+</div>
+</div>
+<!-- Performance Sticker -->
+<div class="absolute -bottom-6 -right-6 z-30 sticker-rotate-2 hidden sm:block">
+<div class="bg-primary-fixed text-surface font-label-caps text-label-caps px-4 py-2 border-2 border-surface uppercase flex items-center gap-2 shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                    SYSTEMS_OPTIMIZED
+                </div>
+</div>
+</div>
+</main>
+<!-- Bottom Ticker -->
+<footer class="fixed bottom-0 left-0 w-full z-40 bg-surface">
+<div class="ticker-wrap h-8 flex items-center border-t-2 border-b-0 border-primary-fixed">
+<div class="ticker font-label-caps text-label-caps" style="animation-direction: reverse; animation-duration: 25s;">
+<span class="ticker-item">SYS_STATUS: OPERATIONAL</span>
+<span class="ticker-item">VOLATILITY: EXTREME</span>
+<span class="ticker-item">ACTIVE_AGENTS: 1,402</span>
+<span class="ticker-item">UPTIME: 99.99%</span>
+<span class="ticker-item text-secondary">CHARITY_TOTAL: $22,109,241.00</span>
+<span class="ticker-item">SYS_STATUS: OPERATIONAL</span>
+</div>
+</div>
+</footer>
+</body></html>

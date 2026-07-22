@@ -1,0 +1,315 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>W Yields - Live Asset Protocol</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Space Mono, Anton, Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Inter:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "secondary-fixed-dim": "#e3b5ff",
+                        "secondary-container": "#9400e4",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#c60061",
+                        "surface": "#131315",
+                        "surface-container-high": "#2a2a2c",
+                        "on-primary-container": "#556d00",
+                        "surface-container": "#201f21",
+                        "on-tertiary-fixed": "#3f001a",
+                        "on-secondary-container": "#f0d2ff",
+                        "tertiary": "#ffffff",
+                        "inverse-on-surface": "#313032",
+                        "outline": "#8e9379",
+                        "surface-dim": "#131315",
+                        "on-primary-fixed": "#161e00",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-tertiary": "#65002e",
+                        "surface-tint": "#abd600",
+                        "error-container": "#93000a",
+                        "on-background": "#e5e1e4",
+                        "tertiary-container": "#ffd9e1",
+                        "surface-variant": "#353437",
+                        "surface-bright": "#39393b",
+                        "on-tertiary-fixed-variant": "#8f0044",
+                        "outline-variant": "#444933",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#c3f400",
+                        "surface-container-highest": "#353437",
+                        "primary": "#ffffff",
+                        "tertiary-fixed": "#ffd9e1",
+                        "surface-container-low": "#1c1b1d",
+                        "secondary-fixed": "#f3daff",
+                        "background": "#131315",
+                        "on-primary": "#283500",
+                        "tertiary-fixed-dim": "#ffb1c4",
+                        "primary-fixed-dim": "#abd600",
+                        "on-surface": "#e5e1e4",
+                        "secondary": "#e3b5ff",
+                        "error": "#ffb4ab",
+                        "inverse-primary": "#506600",
+                        "on-secondary-fixed": "#2f004c",
+                        "on-secondary-fixed-variant": "#6e00ab",
+                        "on-secondary": "#4d007a",
+                        "primary-container": "#c3f400",
+                        "inverse-surface": "#e5e1e4",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "12px",
+                        "unit": "4px",
+                        "margin-desktop": "24px",
+                        "gutter": "16px",
+                        "border-width": "2px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Space Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Anton"],
+                        "headline-xl": ["Anton"],
+                        "financial-display": ["Space Mono"],
+                        "headline-lg": ["Anton"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "400" }],
+                        "financial-display": ["24px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Neon-Brutalism Utilities */
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(195, 244, 0, 0.4);
+        }
+        .marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .marquee span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        .ghost-zero {
+            opacity: 0.15;
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col noise-bg overflow-x-hidden">
+<!-- CRT Scanlines Overlay -->
+<div class="fixed inset-0 z-50 scanlines pointer-events-none"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 bg-surface dark:bg-surface border-b-2 border-primary-fixed">
+<div class="flex items-center gap-2 text-primary-fixed dark:text-primary-fixed hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-100 active:scale-95 p-1 rounded-sm cursor-pointer">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sensors</span>
+</div>
+<div class="font-headline-lg-mobile text-headline-lg-mobile text-primary-fixed italic uppercase">
+        W YIELDS
+    </div>
+<div class="flex items-center gap-2 text-primary-fixed dark:text-primary-fixed hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-100 active:scale-95 p-1 rounded-sm cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</header>
+<!-- Main Layout Container -->
+<div class="flex flex-1 pt-16 pb-28 md:pb-12 h-screen overflow-hidden">
+<!-- NavigationDrawer -->
+
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col h-full overflow-y-auto p-gutter lg:p-margin-desktop relative">
+<!-- Production Scoreboard (Top) -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-unit border-2 border-primary-fixed bg-surface-container-low p-unit mb-6 neon-glow flex-shrink-0">
+<div class="border-2 border-primary-fixed p-3 relative bg-black flex flex-col justify-end h-24 group hover:bg-primary-fixed hover:text-black transition-colors">
+<div class="absolute top-2 left-2 font-label-caps text-label-caps text-primary-fixed group-hover:text-black uppercase">ORIGINAL STAKE</div>
+<div class="relative font-financial-display text-financial-display text-primary-fixed group-hover:text-black text-right mt-auto tracking-widest">
+<span class="ghost-zero text-primary-fixed group-hover:text-black">88,888,888.88</span>
+<span class="">$10,000.00</span>
+</div>
+</div>
+<div class="border-2 border-primary-fixed p-3 relative bg-black flex flex-col justify-end h-24 group hover:bg-primary-fixed hover:text-black transition-colors">
+<div class="absolute top-2 left-2 font-label-caps text-label-caps text-primary-fixed group-hover:text-black uppercase">TOTAL ASSETS UNDER MANAGEMENT (AUM)</div>
+<div class="relative font-financial-display text-financial-display text-primary-fixed group-hover:text-black text-right mt-auto tracking-widest">
+<span class="ghost-zero text-primary-fixed group-hover:text-black">88,888,888.88</span>
+<span class="">$15,200.00</span>
+</div>
+</div>
+<div class="border-2 border-tertiary-fixed p-3 relative bg-black flex flex-col justify-end h-24 group hover:bg-tertiary-fixed hover:text-black transition-colors">
+<div class="absolute top-2 left-2 font-label-caps text-label-caps text-tertiary-fixed group-hover:text-black uppercase">COMMITTED YIELD</div>
+<div class="relative font-financial-display text-financial-display text-tertiary-fixed group-hover:text-black text-right mt-auto tracking-widest">
+<span class="ghost-zero text-tertiary-fixed group-hover:text-black">88,888,888.88</span>
+<span class="">$5,200.00</span>
+</div>
+</div>
+<div class="border-2 border-secondary p-3 relative bg-black flex flex-col justify-end h-24 group hover:bg-secondary hover:text-black transition-colors">
+<div class="absolute top-2 left-2 font-label-caps text-label-caps text-secondary group-hover:text-black uppercase">WITHDRAWABLE CAPITAL</div>
+<div class="relative font-financial-display text-financial-display text-secondary group-hover:text-black text-right mt-auto tracking-widest">
+<span class="ghost-zero text-secondary group-hover:text-black">88,888,888.88</span>
+<span class="">$10,000.00</span>
+</div>
+</div>
+</section>
+<!-- Agent Arena & Pit Boss Layout -->
+<div class="flex flex-col xl:flex-row gap-6 flex-1 min-h-0">
+<!-- Center: Agent Arena -->
+<section class="flex-1 flex flex-col gap-unit overflow-y-auto pr-2">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-headline-xl text-headline-xl text-on-surface uppercase">AGENT ARENA</h2>
+<span class="font-label-caps text-label-caps text-primary-fixed animate-pulse">NETWORK FEED // LIVE</span>
+</div>
+<!-- Agent Card 1 -->
+<div class="relative border-2 border-surface-variant bg-surface-container p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-primary-fixed transition-colors">
+<div class="absolute top-2 right-2 flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-on-tertiary-container animate-ping"></span>
+
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="font-headline-lg text-headline-lg text-surface-variant group-hover:text-primary-fixed transition-colors">01</div>
+<div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface uppercase m-0 leading-none">Odds Goblin</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Source: Sentiment Analysis Protocol</p>
+</div>
+</div>
+<div class="flex gap-6 w-full md:w-auto justify-between md:justify-end items-center">
+<div class="text-right">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">P&amp;L</div>
+<div class="font-financial-display text-financial-display text-primary-fixed">+$2,100</div>
+</div>
+<div class="text-right hidden sm:block">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">CONF</div>
+<div class="font-financial-display text-financial-display text-on-surface">88%</div>
+</div>
+
+</div>
+</div>
+<!-- Agent Card 2 -->
+<div class="relative border-2 border-surface-variant bg-surface-container p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-secondary transition-colors">
+<div class="absolute top-2 right-2 flex items-center gap-2">
+
+
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="font-headline-lg text-headline-lg text-surface-variant group-hover:text-secondary transition-colors">02</div>
+<div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface uppercase m-0 leading-none">Prophet.exe</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Source: Bloomberg Data Feed</p>
+</div>
+</div>
+<div class="flex gap-6 w-full md:w-auto justify-between md:justify-end items-center">
+<div class="text-right">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">P&amp;L</div>
+<div class="font-financial-display text-financial-display text-secondary">+$1,500</div>
+</div>
+<div class="text-right hidden sm:block">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">CONF</div>
+<div class="font-financial-display text-financial-display text-on-surface">92%</div>
+</div>
+
+</div>
+</div>
+<!-- Agent Card 3 -->
+<div class="relative border-2 border-error bg-surface-container p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-error transition-colors">
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="font-headline-lg text-headline-lg text-error group-hover:text-error transition-colors">03</div>
+<div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface uppercase m-0 leading-none">Meme Seer</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Source: Community Aggregator</p>
+</div>
+</div>
+<div class="flex gap-6 w-full md:w-auto justify-between md:justify-end items-center">
+<div class="text-right">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">P&amp;L</div>
+<div class="font-financial-display text-financial-display text-error">-$800</div>
+</div>
+<div class="text-right hidden sm:block">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase">CONF</div>
+<div class="font-financial-display text-financial-display text-on-surface">45%</div>
+</div>
+
+</div>
+</div>
+<div class="relative border-2 border-surface-variant bg-surface-container p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-primary-fixed transition-colors"><div class="absolute top-2 right-2 flex items-center gap-2"></div><div class="flex items-center gap-4 w-full md:w-auto"><div class="font-headline-lg text-headline-lg text-surface-variant group-hover:text-primary-fixed transition-colors">04</div><div><h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface uppercase m-0 leading-none">MARKET MONK</h3><p class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Source: STOCKS &amp; MACRO</p></div></div><div class="flex gap-6 w-full md:w-auto justify-between md:justify-end items-center"><div class="text-right"><div class="font-label-caps text-label-caps text-on-surface-variant uppercase">P&amp;L</div><div class="font-financial-display text-financial-display text-primary-fixed">+$420</div></div><div class="text-right hidden sm:block"><div class="font-label-caps text-label-caps text-on-surface-variant uppercase">CONF</div><div class="font-financial-display text-financial-display text-on-surface">72%</div></div></div></div><div class="relative border-2 border-surface-variant bg-surface-container p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group hover:border-secondary transition-colors"><div class="absolute top-2 right-2 flex items-center gap-2"></div><div class="flex items-center gap-4 w-full md:w-auto"><div class="font-headline-lg text-headline-lg text-surface-variant group-hover:text-secondary transition-colors">05</div><div><h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface uppercase m-0 leading-none">CHARITY DJ</h3><p class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Source: SOCIAL CURATOR</p></div></div><div class="flex gap-6 w-full md:w-auto justify-between md:justify-end items-center"><div class="text-right"><div class="font-label-caps text-label-caps text-on-surface-variant uppercase">P&amp;L</div><div class="font-financial-display text-financial-display text-primary-fixed">+$1,100</div></div><div class="text-right hidden sm:block"><div class="font-label-caps text-label-caps text-on-surface-variant uppercase">CONF</div><div class="font-financial-display text-financial-display text-on-surface">85%</div></div></div></div></section>
+<!-- Side: The Pit Boss -->
+<aside class="w-full xl:w-80 flex-shrink-0 flex flex-col gap-4">
+
+</aside>
+</div>
+</main>
+</div>
+<!-- System Ledger Feed -->
+<div class="fixed bottom-20 md:bottom-0 left-0 w-full z-40 bg-black border-t-2 border-b-2 md:border-b-0 border-primary-fixed h-10 flex items-center overflow-hidden">
+<div class="marquee font-label-caps text-label-caps uppercase flex items-center gap-8 text-on-surface py-2">
+<span class=""><span class="text-primary-fixed">NETWORK ACTIVITY:</span> FEDERAL PROTOCOL ADJUSTMENT +50BPS</span>
+<span class=""><span class="text-secondary">AGENT OPINION:</span> ODDS GOBLIN UPDATES SENTIMENT TO "BEARISH"</span>
+<span class=""><span class="text-tertiary-fixed">PROTOCOL HEADLINE:</span> INSTITUTIONAL YIELD FLOWS STABILIZE</span>
+<span class=""><span class="text-error">NETWORK TELEMETRY:</span> VIX VOLATILITY SPIKE DETECTED (45)</span>
+<span class=""><span class="text-primary-fixed">SYNTHETIC EVENT:</span> LIQUIDITY PROTOCOL INITIATED</span>
+<span class=""><span class="text-secondary">AGENT OPINION:</span> PROPHET.EXE OPTIMIZING LONG POSITIONS</span>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-stretch h-20 bg-surface dark:bg-surface border-t-2 border-primary-fixed">
+<a class="flex flex-col items-center justify-center bg-primary-fixed text-on-primary-fixed rounded-none p-2 border-2 border-primary-fixed flex-1 active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">DASHBOARD</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-fixed p-2 opacity-70 flex-1 hover:bg-primary-fixed-dim hover:text-on-primary-fixed-variant active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">AGENTS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-fixed p-2 opacity-70 flex-1 hover:bg-primary-fixed-dim hover:text-on-primary-fixed-variant active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">YIELD</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-fixed p-2 opacity-70 flex-1 hover:bg-primary-fixed-dim hover:text-on-primary-fixed-variant active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-caps text-label-caps uppercase mt-1">LEDGER</span>
+</a>
+</nav>
+
+
+
+
+</body></html>

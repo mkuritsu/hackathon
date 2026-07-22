@@ -1,0 +1,317 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>W YIELDS - Allocate Capital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Inter:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
+<style>
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.2) 50%,
+                rgba(0, 0, 0, 0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .ticker-strip {
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        
+        .ticker-content {
+            display: inline-block;
+            animation: ticker 20s linear infinite;
+        }
+        
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .neon-glow-primary {
+            box-shadow: 0 0 10px rgba(195, 244, 0, 0.5), 0 0 20px rgba(195, 244, 0, 0.3);
+        }
+        
+        .neon-glow-secondary {
+            box-shadow: 0 0 10px rgba(227, 181, 255, 0.5), 0 0 20px rgba(227, 181, 255, 0.3);
+        }
+
+        .led-text {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+        }
+        
+        .ghost-led {
+            color: rgba(195, 244, 0, 0.1);
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#3c4d00",
+                      "secondary-fixed-dim": "#e3b5ff",
+                      "secondary-container": "#9400e4",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-container": "#c60061",
+                      "surface": "#131315",
+                      "surface-container-high": "#2a2a2c",
+                      "on-primary-container": "#556d00",
+                      "surface-container": "#201f21",
+                      "on-tertiary-fixed": "#3f001a",
+                      "on-secondary-container": "#f0d2ff",
+                      "tertiary": "#ffffff",
+                      "inverse-on-surface": "#313032",
+                      "outline": "#8e9379",
+                      "surface-dim": "#131315",
+                      "on-primary-fixed": "#161e00",
+                      "on-surface-variant": "#c4c9ac",
+                      "on-tertiary": "#65002e",
+                      "surface-tint": "#abd600",
+                      "error-container": "#93000a",
+                      "on-background": "#e5e1e4",
+                      "tertiary-container": "#ffd9e1",
+                      "surface-variant": "#353437",
+                      "surface-bright": "#39393b",
+                      "on-tertiary-fixed-variant": "#8f0044",
+                      "outline-variant": "#444933",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-fixed": "#c3f400",
+                      "surface-container-highest": "#353437",
+                      "primary": "#ffffff",
+                      "tertiary-fixed": "#ffd9e1",
+                      "surface-container-low": "#1c1b1d",
+                      "secondary-fixed": "#f3daff",
+                      "background": "#131315",
+                      "on-primary": "#283500",
+                      "tertiary-fixed-dim": "#ffb1c4",
+                      "primary-fixed-dim": "#abd600",
+                      "on-surface": "#e5e1e4",
+                      "secondary": "#e3b5ff",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#506600",
+                      "on-secondary-fixed": "#2f004c",
+                      "on-secondary-fixed-variant": "#6e00ab",
+                      "on-secondary": "#4d007a",
+                      "primary-container": "#c3f400",
+                      "inverse-surface": "#e5e1e4",
+                      "on-error": "#690005"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "12px",
+                      "unit": "4px",
+                      "margin-desktop": "24px",
+                      "gutter": "16px",
+                      "border-width": "2px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Space Mono"],
+                      "body-md": ["Inter"],
+                      "headline-lg-mobile": ["Anton"],
+                      "headline-xl": ["Anton"],
+                      "financial-display": ["Space Mono"],
+                      "headline-lg": ["Anton"]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "financial-display": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-x-hidden">
+<!-- CRT Scanlines Overlay -->
+<div class="fixed inset-0 scanlines pointer-events-none"></div>
+<!-- Top Ticker -->
+<div class="ticker-strip bg-surface-container-high border-b-[2px] border-primary-fixed h-8 flex items-center font-financial-display text-financial-display text-primary-fixed z-40 fixed top-0 w-full">
+<div class="ticker-content flex gap-8">
+<span class="">W$ LUNA: +42,069%</span>
+<span class="text-error">W$ DOGE: -99.9%</span>
+<span class="">W$ PEPE: +1,337%</span>
+<span class="text-error">W$ FTX: DELISTED</span>
+<span class="">W$ GME: HODL</span>
+<span class="text-error">W$ SAFEMOON: REKT</span>
+</div>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center p-margin-mobile md:p-margin-desktop mt-8 mb-8 relative z-10 w-full max-w-4xl mx-auto">
+<!-- Back Button (Floating Top Left) -->
+<button class="absolute top-margin-mobile left-margin-mobile md:top-margin-desktop md:left-margin-desktop flex items-center gap-2 text-primary-fixed border-[2px] border-primary-fixed bg-surface p-2 hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors z-20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_back</span>
+<span class="font-label-caps text-label-caps">TERMINATE</span>
+</button>
+<!-- Header -->
+<div class="text-center mb-8 relative">
+<div class="absolute -top-4 -right-4 bg-error-container text-on-error-container font-label-caps text-label-caps px-2 py-1 rotate-[3deg] border border-error z-20 shadow-md">
+                RISK ADVISORY: ACTIVE
+            </div>
+<h1 class="font-headline-xl text-headline-xl md:text-[72px] text-primary-fixed tracking-tight led-text drop-shadow-md">CHOOSE YOUR DELUSION</h1>
+<p class="font-label-caps text-label-caps text-secondary-fixed-dim mt-2">LIQUIDITY DEPLOYMENT PORTAL</p>
+</div>
+<!-- Stake Selection Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mb-8">
+<!-- W$25 -->
+<button class="stake-btn relative border-[2px] border-primary-fixed bg-surface-container h-24 flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors group">
+<span class="ghost-led font-financial-display text-[40px]">888</span>
+<span class="relative z-10 font-headline-lg text-headline-lg text-primary-fixed group-hover:text-on-primary-fixed led-text">W$25</span>
+</button>
+<!-- W$50 -->
+<button class="stake-btn relative border-[2px] border-primary-fixed bg-surface-container h-24 flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors group">
+<span class="ghost-led font-financial-display text-[40px]">888</span>
+<span class="relative z-10 font-headline-lg text-headline-lg text-primary-fixed group-hover:text-on-primary-fixed led-text">W$50</span>
+</button>
+<!-- W$100 -->
+<button class="stake-btn relative border-[2px] border-secondary bg-surface-container h-24 flex items-center justify-center hover:bg-secondary hover:text-on-secondary transition-colors group">
+<div class="absolute -top-3 -right-2 bg-tertiary-container text-on-tertiary-container font-label-caps text-label-caps px-2 py-0.5 rotate-[-2deg] border border-on-tertiary-container z-20">
+                    STRATEGIC ENTRY
+                </div>
+<span class="ghost-led font-financial-display text-[40px] !text-secondary/10">888</span>
+<span class="relative z-10 font-headline-lg text-headline-lg text-secondary group-hover:text-on-secondary led-text">W$100</span>
+</button>
+<!-- W$250 -->
+<button class="stake-btn relative border-[2px] border-primary-fixed bg-surface-container h-24 flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors group neon-glow-primary bg-primary-fixed text-on-primary-fixed">
+<span class="ghost-led font-financial-display text-[40px]">888</span>
+<span class="relative z-10 font-headline-lg text-headline-lg text-primary-fixed group-hover:text-on-primary-fixed led-text">W$250</span>
+</button>
+</div>
+<!-- Custom Input -->
+<div class="w-full max-w-md mb-8 relative group">
+<label class="absolute top-0 left-0 text-primary-fixed font-label-caps text-[10px] transform -translate-y-1/2 translate-x-2 bg-background px-1 z-10">MANUAL ALLOCATION</label>
+<div class="relative flex items-end h-16 border-b-[3px] border-primary-fixed bg-surface-container-low px-4 pb-2 focus-within:bg-surface-container focus-within:border-secondary transition-colors">
+<span class="text-primary-fixed font-financial-display text-financial-display mr-2 mb-1">W$</span>
+<input class="w-full bg-transparent border-none text-primary-fixed font-financial-display text-[32px] led-text text-right focus:ring-0 p-0 mb-[-4px]" max="10000" min="1" placeholder="0" type="number">
+<span class="ghost-led font-financial-display text-[32px] right-4 bottom-1">88888</span>
+</div>
+<p class="text-error font-label-caps text-[10px] mt-1 hidden group-[.invalid]:block">INSUFFICIENT COLLATERAL</p>
+</div>
+<!-- Platform Protocol Section -->
+<div class="w-full bg-surface-container-highest border-[2px] border-outline-variant p-4 mb-12 relative overflow-hidden">
+<!-- Noise Texture -->
+<div class="absolute inset-0 opacity-10 mix-blend-overlay" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+<!-- Rec Dot -->
+<div class="absolute top-2 right-2 w-3 h-3 bg-primary-fixed rounded-full animate-pulse shadow-[0_0_8px_#c3f400]"></div>
+<div class="relative z-10 flex gap-4 items-start">
+<span class="material-symbols-outlined text-secondary text-[32px]" style="font-variation-settings: 'FILL' 1;">security</span>
+<div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-secondary mb-2 uppercase">Platform Protocol &amp; Governance</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        By deploying liquidity, you acknowledge all simulated gains are for philanthropic conversion. 
+                        Eligible exits are capped at the initial W$ allocation value. 
+                        The terminal remains a synthetic environment for strategic agent-driven portfolios.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full max-w-md border-[2px] border-primary-fixed bg-surface text-primary-fixed font-headline-lg text-headline-lg py-4 hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors active:scale-95 neon-glow-primary">
+            DEPLOY AGENTS
+        </button>
+</main>
+<!-- Bottom Ticker -->
+<div class="ticker-strip bg-surface-container-high border-t-[2px] border-primary-fixed h-8 flex items-center font-financial-display text-financial-display text-primary-fixed z-40 fixed bottom-0 w-full">
+<div class="ticker-content flex gap-8" style="animation-direction: reverse; animation-duration: 25s;">
+<span class="text-secondary">SYSTEM_PROTOCOL: STABLE</span>
+<span class="">LIQUIDITY_POOL: LOCKED</span>
+<span class="text-error">EXPOSURE: NOMINAL</span>
+<span class="text-secondary">ALLOCATION_GATEWAY: OPEN</span>
+<span class="">NETWORK_NODES: ACTIVE</span>
+</div>
+</div>
+<script>
+        // Handle button selection state visually
+        document.querySelectorAll('.stake-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.stake-btn').forEach(b => {
+                    b.classList.remove('neon-glow-primary', 'neon-glow-secondary', 'bg-primary-fixed', 'text-on-primary-fixed', 'bg-secondary', 'text-on-secondary');
+                    // This simple demo doesn't track initial classes perfectly, but handles the visual toggle
+                });
+                
+                if(btn.querySelector('.text-secondary')) {
+                     btn.classList.add('neon-glow-secondary', 'bg-secondary', 'text-on-secondary');
+                } else {
+                     btn.classList.add('neon-glow-primary', 'bg-primary-fixed', 'text-on-primary-fixed');
+                }
+            });
+        });
+    </script>
+
+
+</body></html>
