@@ -15,6 +15,22 @@ interface CoinMarket {
 	price_change_percentage_7d_in_currency?: number;
 }
 
+// Stablecoins dominate volume rankings but are dull to trade; skip them so the
+// analyst sees real movers.
+const STABLECOINS = new Set([
+	"usdt",
+	"usdc",
+	"dai",
+	"busd",
+	"tusd",
+	"usdd",
+	"fdusd",
+	"usde",
+	"pyusd",
+	"gusd",
+	"usds",
+]);
+
 async function markets(params: Record<string, string>): Promise<CoinMarket[]> {
 	const url = new URL(`${BASE}/coins/markets`);
 	url.searchParams.set("vs_currency", "usd");
@@ -45,14 +61,18 @@ function toContext(m: CoinMarket): MarketContext {
 export const cryptoAdapter: MarketAdapter = {
 	id: "crypto",
 
-	// Top N by 24h trading volume.
+	// Top N by 24h trading volume, excluding stablecoins. Over-fetch to backfill
+	// the ones we filter out.
 	async getUniverse(limit = 5): Promise<Instrument[]> {
 		const rows = await markets({
 			order: "volume_desc",
-			per_page: String(limit),
+			per_page: String(limit + 10),
 			page: "1",
 		});
-		return rows.map((m) => ({ id: m.id, symbol: m.symbol, name: m.name }));
+		return rows
+			.filter((m) => !STABLECOINS.has(m.symbol.toLowerCase()))
+			.slice(0, limit)
+			.map((m) => ({ id: m.id, symbol: m.symbol, name: m.name }));
 	},
 
 	async getQuote(id: string): Promise<Quote> {

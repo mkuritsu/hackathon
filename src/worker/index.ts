@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { analyzeApp } from "./analyze";
 import { authApp, sessionCookieMiddleware } from "./auth";
+import { modelsApp } from "./models-api";
 import { researchApp } from "./research-api";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -18,6 +19,7 @@ app.get("/api/health", (c) =>
 app.route("/api/auth", authApp);
 app.route("/api/analyze", analyzeApp);
 app.route("/api/research", researchApp);
+app.route("/api/models", modelsApp);
 
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
 

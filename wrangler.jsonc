@@ -25,6 +25,12 @@
 	"ai": {
 		"binding": "AI"
 	},
+	"kv_namespaces": [
+		{
+			"binding": "MODELS",
+			"id": "f9a226bde3ae4eab956827524b9ceae5"
+		}
+	],
 	"workflows": [
 		{
 			"name": "research-workflow",

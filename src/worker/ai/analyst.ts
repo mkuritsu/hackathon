@@ -2,8 +2,6 @@ import { ANALYST_SYSTEM_PROMPT, buildAnalystUserPrompt } from "./prompts";
 import type { MarketContext } from "../adapters/types";
 import type { Action, Pitch, PortfolioContext } from "../contracts";
 
-export const ANALYST_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
-
 const PITCH_JSON_SCHEMA = {
 	type: "object",
 	properties: {
@@ -53,12 +51,13 @@ type AiRunner = { run(model: string, input: unknown): Promise<unknown> };
 
 export async function runAnalyst(
 	ai: Ai,
+	modelId: string,
 	adapter: string,
 	ctx: MarketContext,
 	portfolio: PortfolioContext,
 ): Promise<Pitch> {
 	try {
-		const res = await (ai as unknown as AiRunner).run(ANALYST_MODEL, {
+		const res = await (ai as unknown as AiRunner).run(modelId, {
 			messages: [
 				{ role: "system", content: ANALYST_SYSTEM_PROMPT },
 				{ role: "user", content: buildAnalystUserPrompt(ctx, portfolio) },

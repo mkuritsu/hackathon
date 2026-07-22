@@ -3,6 +3,7 @@ import { cryptoAdapter } from "./adapters/crypto";
 import type { MarketContext } from "./adapters/types";
 import { runAnalyst } from "./ai/analyst";
 import type { PortfolioContext } from "./contracts";
+import { getModelId } from "./models";
 
 type AppEnv = { Bindings: Env };
 
@@ -39,6 +40,7 @@ analyzeApp.get("/", async (c) => {
 		}
 	}
 
-	const pitch = await runAnalyst(c.env.AI, cryptoAdapter.id, ctx, DEFAULT_PORTFOLIO);
-	return c.json({ context: ctx, pitch });
+	const modelId = await getModelId(c.env, "analyst");
+	const pitch = await runAnalyst(c.env.AI, modelId, cryptoAdapter.id, ctx, DEFAULT_PORTFOLIO);
+	return c.json({ model: modelId, context: ctx, pitch });
 });

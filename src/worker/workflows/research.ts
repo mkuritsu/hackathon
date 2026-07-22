@@ -3,6 +3,7 @@ import { cryptoAdapter } from "../adapters/crypto";
 import type { Instrument, MarketAdapter } from "../adapters/types";
 import { runAnalyst } from "../ai/analyst";
 import { MemoryPitchStore, type Pitch, type PitchStore, type PortfolioContext } from "../contracts";
+import { getModelId } from "../models";
 import { D1PitchStore } from "../store";
 
 const ADAPTERS: Record<string, MarketAdapter> = {
@@ -35,6 +36,8 @@ export class ResearchWorkflow extends WorkflowEntrypoint<Env, ResearchParams> {
 			event.payload.instruments ??
 			(await step.do("select-universe", () => adapter.getUniverse(topN)));
 
+		const modelId = await getModelId(this.env, "analyst");
+
 		const pitches = await Promise.all(
 			universe.map((inst) =>
 				step.do(
@@ -42,7 +45,7 @@ export class ResearchWorkflow extends WorkflowEntrypoint<Env, ResearchParams> {
 					{ retries: { limit: 3, delay: "5 seconds", backoff: "exponential" } },
 					async (): Promise<Pitch> => {
 						const ctx = await adapter.getContext(inst.id);
-						return runAnalyst(this.env.AI, adapter.id, ctx, portfolio);
+						return runAnalyst(this.env.AI, modelId, adapter.id, ctx, portfolio);
 					},
 				),
 			),
