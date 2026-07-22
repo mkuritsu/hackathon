@@ -5,22 +5,35 @@ type LoginProps = {
 	onLoggedIn: (username: string) => void;
 };
 
+type Mode = "login" | "register";
+
 export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
+	const [mode, setMode] = useState<Mode>("login");
 	const [username, setUsername] = useState(initialUsername);
 	const [email, setEmail] = useState("");
 	const [error, setError] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	function switchMode(next: Mode) {
+		setMode(next);
+		setError("");
+	}
 
 	async function submit(event: React.FormEvent) {
 		event.preventDefault();
 		setError("");
 		setIsSubmitting(true);
 
+		const payload =
+			mode === "register"
+				? { username: username.trim(), email: email.trim() }
+				: { username: username.trim() };
+
 		try {
 			const response = await fetch("/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username: username.trim(), email: email.trim() }),
+				body: JSON.stringify(payload),
 			});
 			const data = (await response.json()) as {
 				user?: { username: string };
@@ -28,25 +41,56 @@ export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 			};
 
 			if (!response.ok || !data.user) {
-				throw new Error(data.error ?? `Login failed (${response.status})`);
+				if (mode === "login" && data.error?.includes("register")) {
+					throw new Error("Username not found. Switch to Register to create an account.");
+				}
+				throw new Error(data.error ?? `Request failed (${response.status})`);
 			}
 
 			onLoggedIn(data.user.username);
-		} catch (loginError) {
-			setError(loginError instanceof Error ? loginError.message : "Login failed");
+		} catch (submitError) {
+			setError(submitError instanceof Error ? submitError.message : "Request failed");
 		} finally {
 			setIsSubmitting(false);
 		}
 	}
 
+	const registering = mode === "register";
+	const disabled =
+		isSubmitting ||
+		username.trim().length < 2 ||
+		(registering && email.trim().length < 3);
+
 	return (
 		<main className="auth">
 			<form className="auth-card" onSubmit={submit}>
 				<p className="eyebrow">Hedge Fund of Agents</p>
-				<h1>Sign in</h1>
+
+				<div className="tabs" role="tablist" aria-label="Authentication">
+					<button
+						type="button"
+						role="tab"
+						aria-selected={!registering}
+						className={`tab ${!registering ? "active" : ""}`}
+						onClick={() => switchMode("login")}
+					>
+						Login
+					</button>
+					<button
+						type="button"
+						role="tab"
+						aria-selected={registering}
+						className={`tab ${registering ? "active" : ""}`}
+						onClick={() => switchMode("register")}
+					>
+						Register
+					</button>
+				</div>
+
 				<p className="intro">
-					Enter a username to access the desk. No password needed. New here? Add an
-					email and we&apos;ll send you the daily report.
+					{registering
+						? "Pick a username and add an email. We'll send you the daily report."
+						: "Enter your username to access the desk. No password needed."}
 				</p>
 
 				<label htmlFor="username">Username</label>
@@ -60,19 +104,29 @@ export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 					onChange={(event) => setUsername(event.target.value)}
 				/>
 
-				<label htmlFor="email">Email (new users)</label>
-				<input
-					id="email"
-					name="email"
-					type="email"
-					autoComplete="email"
-					placeholder="you@example.com"
-					value={email}
-					onChange={(event) => setEmail(event.target.value)}
-				/>
+				{registering && (
+					<>
+						<label htmlFor="email">Email</label>
+						<input
+							id="email"
+							name="email"
+							type="email"
+							autoComplete="email"
+							placeholder="you@example.com"
+							value={email}
+							onChange={(event) => setEmail(event.target.value)}
+						/>
+					</>
+				)}
 
-				<button type="submit" disabled={isSubmitting || username.trim().length < 2}>
-					{isSubmitting ? "Signing in..." : "Continue"}
+				<button type="submit" disabled={disabled}>
+					{isSubmitting
+						? registering
+							? "Creating account..."
+							: "Signing in..."
+						: registering
+							? "Create account"
+							: "Continue"}
 				</button>
 
 				{error && <strong className="error">{error}</strong>}
