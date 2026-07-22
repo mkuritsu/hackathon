@@ -32,6 +32,14 @@
 			"bucket_name": "hackathon-reports"
 		}
 	],
+	"send_email": [
+		{
+			"name": "EMAIL",
+			"allowed_sender_addresses": [
+				"hackathon-winners@mkuritsu.dev"
+			]
+		}
+	],
 	"triggers": {
 		"crons": [
 			"0 21 * * *"

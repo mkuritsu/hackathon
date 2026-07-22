@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { authApp, sessionCookieMiddleware } from "./auth";
 import { gatherReportData, generateAndStoreReport, renderReportHtml } from "./report/pdf";
+import { sendReportEmail } from "./report/email";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -71,8 +72,14 @@ app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
 export default {
 	fetch: app.fetch,
-	// Daily cron: generate and store the report in R2.
+	// Daily cron: generate the report, store it in R2, then email the PDF to
+	// every registered user.
 	async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-		ctx.waitUntil(generateAndStoreReport(env));
+		ctx.waitUntil(
+			(async () => {
+				const { pdf, key } = await generateAndStoreReport(env);
+				await sendReportEmail(env, pdf, key);
+			})(),
+		);
 	},
 } satisfies ExportedHandler<Env>;

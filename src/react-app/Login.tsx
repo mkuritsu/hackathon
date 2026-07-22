@@ -7,6 +7,7 @@ type LoginProps = {
 
 export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 	const [username, setUsername] = useState(initialUsername);
+	const [email, setEmail] = useState("");
 	const [error, setError] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -19,7 +20,7 @@ export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 			const response = await fetch("/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username: username.trim() }),
+				body: JSON.stringify({ username: username.trim(), email: email.trim() }),
 			});
 			const data = (await response.json()) as {
 				user?: { username: string };
@@ -43,7 +44,10 @@ export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 			<form className="auth-card" onSubmit={submit}>
 				<p className="eyebrow">Hedge Fund of Agents</p>
 				<h1>Sign in</h1>
-				<p className="intro">Enter a username to access the desk. No password needed.</p>
+				<p className="intro">
+					Enter a username to access the desk. No password needed. New here? Add an
+					email and we&apos;ll send you the daily report.
+				</p>
 
 				<label htmlFor="username">Username</label>
 				<input
@@ -54,6 +58,17 @@ export default function Login({ initialUsername, onLoggedIn }: LoginProps) {
 					placeholder="trader_joe"
 					value={username}
 					onChange={(event) => setUsername(event.target.value)}
+				/>
+
+				<label htmlFor="email">Email (new users)</label>
+				<input
+					id="email"
+					name="email"
+					type="email"
+					autoComplete="email"
+					placeholder="you@example.com"
+					value={email}
+					onChange={(event) => setEmail(event.target.value)}
 				/>
 
 				<button type="submit" disabled={isSubmitting || username.trim().length < 2}>
