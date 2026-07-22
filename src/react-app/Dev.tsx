@@ -66,6 +66,12 @@ export default function Dev({ onBack }: { onBack: () => void }) {
 			onClick: () => window.open("/api/report/preview", "_blank"),
 		},
 		{
+			key: "research",
+			label: "Run research cycle (agents)",
+			hint: "POST /api/research/run - starts ResearchWorkflow across all markets, executes final calls into your account",
+			onClick: () => run("research", "/api/research/run", "POST"),
+		},
+		{
 			key: "health",
 			label: "Health check",
 			hint: "GET /api/health",

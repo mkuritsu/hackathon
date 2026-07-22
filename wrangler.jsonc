@@ -116,8 +116,8 @@
 			"d1_databases": [
 				{
 					"binding": "ACCOUNTS_DB",
-					"database_name": "hackathon-accounts",
-					"database_id": "e00e1f60-4881-4f06-bcce-35ab24795bcf"
+					"database_name": "hackathon-accounts-prod",
+					"database_id": "bd75ddde-8c79-4e26-85fe-2249432792be"
 				}
 			],
 			"ai": {
@@ -126,12 +126,12 @@
 			"kv_namespaces": [
 				{
 					"binding": "MODELS",
-					"id": "6a845d96b1344292b97a2e33e9fcc8d9"
+					"id": "eebe5751485847408059cd1632a31206"
 				}
 			],
 			"workflows": [
 				{
-					"name": "research-workflow",
+					"name": "research-workflow-prod",
 					"binding": "RESEARCH_WORKFLOW",
 					"class_name": "ResearchWorkflow"
 				}
@@ -143,7 +143,7 @@
 			"r2_buckets": [
 				{
 					"binding": "REPORTS",
-					"bucket_name": "hackathon-reports"
+					"bucket_name": "hackathon-reports-prod"
 				}
 			],
 			"send_email": [
