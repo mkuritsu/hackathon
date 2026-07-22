@@ -25,5 +25,11 @@
 	"browser": {
 		"binding": "BROWSER",
 		"remote": true
-	}
+	},
+	"r2_buckets": [
+		{
+			"binding": "REPORTS",
+			"bucket_name": "hackathon-reports"
+		}
+	]
 }

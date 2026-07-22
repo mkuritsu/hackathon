@@ -23,6 +23,9 @@ app.on(["GET", "POST"], "/api/report/pdf", async (c) => {
 	const data = await gatherReportData(c.env.ACCOUNTS_DB);
 	const pdf = await renderReportPdf(c.env.BROWSER, data);
 	const filename = `fund-report-${data.generatedAt.slice(0, 10)}.pdf`;
+	await c.env.REPORTS.put(filename, pdf, {
+		httpMetadata: { contentType: "application/pdf" },
+	});
 	return new Response(pdf, {
 		status: 200,
 		headers: {
