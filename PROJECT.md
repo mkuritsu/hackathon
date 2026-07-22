@@ -114,11 +114,17 @@ options, sports) for breadth to prove extensibility.
 ---
 
 ## Data model (D1, draft)
-- `positions(id, adapter, instrument, qty, avg_price, opened_at)`
-- `trades(id, ts, adapter, instrument, action, qty, price, thesis, confidence)`
-- `nav_snapshots(ts, cash, positions_value, nav)` — P&L over time
-- `agent_pnl(adapter, realized_pnl, unrealized_pnl, trade_count)` — leaderboard
-- `config(key, value)` — mandate, starting cash, cadence, recipients
+- `accounts(user_id, starting_cash, cash, created_at)` — per-user fund balance
+- `positions(id, user_id, adapter, instrument, qty, avg_price, opened_at)`
+- `trades(id, user_id, ts, adapter, instrument, action, qty, price, thesis, confidence)`
+- `nav_snapshots(user_id, ts, cash, positions_value, nav)` — per-user P&L over time
+- `agent_pnl(user_id, adapter, realized_pnl, unrealized_pnl, trade_count)` — per-user leaderboard
+- `config(key, value)` — mandate, cadence (global)
+
+> Per-user funds (migration 0004): each registered user is their own simulated
+> fund starting at $100k. Cash, positions, trades, NAV history, and the
+> per-market leaderboard are all scoped by `user_id`, and reports are generated,
+> stored in R2 (`report-{userId}-{date}.pdf`), and emailed per account.
 
 ---
 
@@ -215,5 +221,10 @@ Nail the shared contracts first so everyone builds in parallel against stubs.
   research cycle that executes the final buy/sells immediately (confidence-scaled
   sizing) into D1 (positions/trades/cash), then holds. GET /api/portfolio feeds
   the frontend from D1 (cash, positions, cost-basis NAV, trades).
+- [added] Per-user funds (migration 0004): every registered user is their own
+  simulated fund ($100k start). Cash/positions/trades/NAV/leaderboard are scoped
+  by user_id; research trades into the caller's account; /api/portfolio and all
+  report routes are auth-scoped. Reports are generated + stored in R2 as
+  `report-{userId}-{date}.pdf` and emailed to each user (their own only).
 - [future] End-of-month liquidation + final report: NOT implemented
   (ledger.liquidateAndReport is a stub). Mark-to-market NAV also future.

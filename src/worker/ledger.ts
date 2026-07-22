@@ -1,3 +1,4 @@
+import { ensureAccount, setCash } from "./account";
 import { getAdapter } from "./adapters";
 import type { PriceUnit } from "./adapters/types";
 import type { Pitch } from "./contracts";
@@ -31,33 +32,51 @@ interface PositionRow {
 	avg_price: number;
 }
 
-async function getCash(db: D1Database): Promise<number> {
-	const row = await db.prepare("SELECT value FROM config WHERE key = 'cash'").first<{ value: string }>();
-	return row ? Number(row.value) : 0;
-}
-
-async function setCash(db: D1Database, cash: number): Promise<void> {
-	await db
-		.prepare("INSERT INTO config (key, value) VALUES ('cash', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
-		.bind(String(cash))
-		.run();
-}
-
-function getPosition(db: D1Database, adapter: string, instrument: string): Promise<PositionRow | null> {
+function getPosition(
+	db: D1Database,
+	userId: number,
+	adapter: string,
+	instrument: string,
+): Promise<PositionRow | null> {
 	return db
-		.prepare("SELECT id, qty, avg_price FROM positions WHERE adapter = ? AND instrument = ?")
-		.bind(adapter, instrument)
+		.prepare(
+			"SELECT id, qty, avg_price FROM positions WHERE user_id = ? AND adapter = ? AND instrument = ?",
+		)
+		.bind(userId, adapter, instrument)
 		.first<PositionRow>();
 }
 
-// Execute the ranked final calls once: buys open/add positions (spending cash),
-// sells close existing positions (no shorting in the POC). Records every fill in
-// the trades table and updates cash.
+// Upsert this user's per-market leaderboard row: every fill bumps the trade
+// count; realized P&L accrues on sells (proceeds minus cost basis).
+function recordAgentPnl(
+	db: D1Database,
+	userId: number,
+	adapter: string,
+	realizedDelta: number,
+): Promise<D1Result> {
+	return db
+		.prepare(
+			`INSERT INTO agent_pnl (user_id, adapter, realized_pnl, trade_count)
+			 VALUES (?, ?, ?, 1)
+			 ON CONFLICT(user_id, adapter) DO UPDATE SET
+			   realized_pnl = realized_pnl + excluded.realized_pnl,
+			   trade_count = trade_count + 1`,
+		)
+		.bind(userId, adapter, realizedDelta)
+		.run();
+}
+
+// Execute the ranked final calls once for a single user's account: buys
+// open/add positions (spending that account's cash), sells close existing
+// positions (no shorting in the POC). Records every fill in the trades table,
+// updates the account cash, and maintains the per-market leaderboard.
 export async function executeCalls(
 	db: D1Database,
+	userId: number,
 	finalCalls: Pitch[],
 ): Promise<{ trades: ExecutedTrade[]; cash: number }> {
-	let cash = await getCash(db);
+	const account = await ensureAccount(db, userId);
+	let cash = account.cash;
 	const trades: ExecutedTrade[] = [];
 
 	for (const call of finalCalls) {
@@ -85,38 +104,41 @@ export async function executeCalls(
 				continue;
 			}
 			const qty = notional / cost;
-			const pos = await getPosition(db, call.adapter, call.instrument);
+			const pos = await getPosition(db, userId, call.adapter, call.instrument);
 			if (pos) {
 				const newQty = pos.qty + qty;
 				const newAvg = (pos.qty * pos.avg_price + qty * cost) / newQty;
 				await db.prepare("UPDATE positions SET qty = ?, avg_price = ? WHERE id = ?").bind(newQty, newAvg, pos.id).run();
 			} else {
 				await db
-					.prepare("INSERT INTO positions (adapter, instrument, qty, avg_price) VALUES (?, ?, ?, ?)")
-					.bind(call.adapter, call.instrument, qty, cost)
+					.prepare("INSERT INTO positions (user_id, adapter, instrument, qty, avg_price) VALUES (?, ?, ?, ?, ?)")
+					.bind(userId, call.adapter, call.instrument, qty, cost)
 					.run();
 			}
 			await db
 				.prepare(
-					"INSERT INTO trades (adapter, instrument, action, qty, price, thesis, confidence) VALUES (?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO trades (user_id, adapter, instrument, action, qty, price, thesis, confidence) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 				)
-				.bind(call.adapter, call.instrument, "buy", qty, cost, call.thesis, call.confidence)
+				.bind(userId, call.adapter, call.instrument, "buy", qty, cost, call.thesis, call.confidence)
 				.run();
+			await recordAgentPnl(db, userId, call.adapter, 0);
 			cash -= notional;
 			trades.push({ adapter: call.adapter, instrument: call.instrument, action: "buy", qty, price: cost, notional });
 		} else if (call.action === "sell") {
-			const pos = await getPosition(db, call.adapter, call.instrument);
+			const pos = await getPosition(db, userId, call.adapter, call.instrument);
 			if (!pos || pos.qty <= 0) {
 				continue; // no shorting in the POC
 			}
 			const proceeds = pos.qty * cost;
+			const realized = (cost - pos.avg_price) * pos.qty;
 			await db.prepare("DELETE FROM positions WHERE id = ?").bind(pos.id).run();
 			await db
 				.prepare(
-					"INSERT INTO trades (adapter, instrument, action, qty, price, thesis, confidence) VALUES (?, ?, ?, ?, ?, ?, ?)",
+					"INSERT INTO trades (user_id, adapter, instrument, action, qty, price, thesis, confidence) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 				)
-				.bind(call.adapter, call.instrument, "sell", pos.qty, cost, call.thesis, call.confidence)
+				.bind(userId, call.adapter, call.instrument, "sell", pos.qty, cost, call.thesis, call.confidence)
 				.run();
+			await recordAgentPnl(db, userId, call.adapter, realized);
 			cash += proceeds;
 			trades.push({
 				adapter: call.adapter,
@@ -129,7 +151,7 @@ export async function executeCalls(
 		}
 	}
 
-	await setCash(db, cash);
+	await setCash(db, userId, cash);
 	return { trades, cash };
 }
 

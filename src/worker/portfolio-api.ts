@@ -1,19 +1,27 @@
 import { Hono } from "hono";
+import { ensureAccount } from "./account";
+import { currentUser } from "./auth";
 
 type AppEnv = { Bindings: Env };
 
 export const portfolioApp = new Hono<AppEnv>();
 
-// GET /api/portfolio -> everything the frontend needs to render the desk:
-// cash, positions the fund decided on, cost-basis NAV, and recent trades.
+// GET /api/portfolio -> everything the frontend needs to render the logged-in
+// user's desk: their cash, positions, cost-basis NAV, and recent trades.
 portfolioApp.get("/", async (c) => {
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
 	const db = c.env.ACCOUNTS_DB;
-	const cashRow = await db.prepare("SELECT value FROM config WHERE key = 'cash'").first<{ value: string }>();
-	const cash = cashRow ? Number(cashRow.value) : 0;
+	const account = await ensureAccount(db, user.id);
 
 	const positions =
 		(await db
-			.prepare("SELECT adapter, instrument, qty, avg_price, opened_at FROM positions ORDER BY id DESC")
+			.prepare(
+				"SELECT adapter, instrument, qty, avg_price, opened_at FROM positions WHERE user_id = ? ORDER BY id DESC",
+			)
+			.bind(user.id)
 			.all()).results ?? [];
 
 	const positionsValue = positions.reduce(
@@ -24,20 +32,23 @@ portfolioApp.get("/", async (c) => {
 	const trades =
 		(await db
 			.prepare(
-				"SELECT ts, adapter, instrument, action, qty, price, thesis, confidence FROM trades ORDER BY id DESC LIMIT 50",
+				"SELECT ts, adapter, instrument, action, qty, price, thesis, confidence FROM trades WHERE user_id = ? ORDER BY id DESC LIMIT 50",
 			)
+			.bind(user.id)
 			.all()).results ?? [];
 
 	return c.json({
-		cash,
+		cash: account.cash,
+		startingCash: account.starting_cash,
 		positionsValue, // cost basis; mark-to-market is future work
-		nav: cash + positionsValue,
+		nav: account.cash + positionsValue,
 		positions,
 		trades,
 	});
 });
 
-// GET /api/portfolio/pitches -> the latest reasoning (what it decided on).
+// GET /api/portfolio/pitches -> the latest reasoning (shared across the desk;
+// pitches are not per-user, they are the analyst's market views).
 portfolioApp.get("/pitches", async (c) => {
 	const pitches =
 		(await c.env.ACCOUNTS_DB

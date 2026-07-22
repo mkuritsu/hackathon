@@ -22,6 +22,7 @@ export interface ReportLeaderboardRow {
 
 export interface ReportData {
 	generatedAt: string;
+	owner: string;
 	mandate: string;
 	startingCash: number;
 	nav: number;
@@ -30,6 +31,89 @@ export interface ReportData {
 	priorNav: number | null;
 	trades: ReportTrade[];
 	leaderboard: ReportLeaderboardRow[];
+}
+
+// Credible randomized report data for previewing/demoing the fully populated
+// layout without needing real account activity in D1.
+export function sampleReportData(owner = "demo-desk"): ReportData {
+	const rand = (min: number, max: number) => min + Math.random() * (max - min);
+	const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+	const round2 = (n: number) => Math.round(n * 100) / 100;
+
+	const startingCash = 100_000;
+
+	const markets: Record<string, string[]> = {
+		crypto: ["BTC", "ETH", "SOL", "DOGE", "PEPE"],
+		stocks: ["NVDA", "AAPL", "TSLA", "AMD", "MSFT"],
+		prediction: ["US-ELECTION-2028", "FED-CUT-Q3", "OPENAI-IPO-2026"],
+		sports: ["LAL-ML", "ARS-OVER-2.5", "CHIEFS-SPREAD"],
+	};
+
+	const priceFor = (adapter: string) => {
+		switch (adapter) {
+			case "crypto":
+				return round2(rand(0.000008, 68_000));
+			case "stocks":
+				return round2(rand(95, 940));
+			default:
+				return round2(rand(0.05, 0.95)); // implied probability as price
+		}
+	};
+
+	const theses = [
+		"Momentum breakout on rising volume; trend-following signal fired.",
+		"Oversold RSI with bullish divergence into a key support retest.",
+		"Positive news catalyst not yet priced in; mean-reversion setup.",
+		"Implied odds lag the consensus model; edge on the yes side.",
+		"Sector rotation tailwind; relative strength versus the benchmark.",
+		"Funding rates cooling after a squeeze; fading the overextension.",
+	];
+
+	const adapters = Object.keys(markets);
+	const trades: ReportTrade[] = [];
+	const now = Date.now();
+	const tradeCount = Math.floor(rand(9, 16));
+	for (let i = 0; i < tradeCount; i++) {
+		const adapter = pick(adapters);
+		const action = pick(["buy", "buy", "sell", "hold"]);
+		const price = priceFor(adapter);
+		trades.push({
+			ts: new Date(now - i * rand(20, 90) * 60_000).toISOString(),
+			adapter,
+			instrument: pick(markets[adapter]),
+			action,
+			qty: round2(rand(1, adapter === "crypto" ? 5 : 120)),
+			price,
+			thesis: action === "hold" ? null : pick(theses),
+			confidence: round2(rand(0.52, 0.95)),
+		});
+	}
+
+	const leaderboard: ReportLeaderboardRow[] = adapters.map((adapter) => ({
+		adapter,
+		realized_pnl: round2(rand(-2_800, 6_500)),
+		unrealized_pnl: round2(rand(-1_500, 4_200)),
+		trade_count: trades.filter((t) => t.adapter === adapter).length,
+	}));
+
+	const totalPnl = leaderboard.reduce((s, r) => s + r.realized_pnl + r.unrealized_pnl, 0);
+	const nav = round2(startingCash + totalPnl);
+	const positionsValue = round2(rand(0.3, 0.7) * nav);
+	const cash = round2(nav - positionsValue);
+	const priorNav = round2(nav - rand(-1_800, 2_400));
+
+	return {
+		generatedAt: new Date().toISOString(),
+		owner,
+		mandate: "Make money. All trades simulated.",
+		startingCash,
+		nav,
+		cash,
+		positionsValue,
+		priorNav,
+		trades,
+		leaderboard,
+	};
 }
 
 const money = (n: number) =>
@@ -88,7 +172,8 @@ export function ReportDocument({ data }: { data: ReportData }) {
 					<p className="eyebrow">Hedge Fund of Agents</p>
 					<h1>Daily Desk Report</h1>
 					<p className="sub">
-						Generated {new Date(data.generatedAt).toUTCString()} · All trades simulated
+						Account: {data.owner} · Generated {new Date(data.generatedAt).toUTCString()} · All
+						trades simulated
 					</p>
 
 					<div className="cards">

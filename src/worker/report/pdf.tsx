@@ -2,22 +2,36 @@
 // Browser Rendering (headless Chrome) to produce a PDF.
 
 import { renderToStaticMarkup } from "react-dom/server";
+import { ensureAccount } from "../account";
 import { ReportDocument, type ReportData } from "./ReportDocument";
 import type { ReportLeaderboardRow, ReportTrade } from "./ReportDocument";
+
+// A user's account context needed to title and key their report.
+export interface ReportOwner {
+	id: number;
+	username: string;
+}
 
 export function renderReportHtml(data: ReportData): string {
 	return "<!doctype html>" + renderToStaticMarkup(<ReportDocument data={data} />);
 }
 
-// Generate the daily report PDF from D1 state and store it in R2, keyed by the
-// generation date. Returns the PDF bytes and the R2 key. Shared by the HTTP
-// route and the scheduled (cron) handler.
+// The R2 key for a user's report on a given date (YYYY-MM-DD). One key per user
+// per day so each account's reports are isolated and listable by prefix.
+export function reportKey(userId: number, date: string): string {
+	return `report-${userId}-${date}.pdf`;
+}
+
+// Generate the daily report PDF for one user's account from D1 state and store
+// it in R2, keyed by user + date. Returns the PDF bytes and the R2 key. Shared
+// by the HTTP route and the scheduled (cron) handler.
 export async function generateAndStoreReport(
 	env: Env,
+	owner: ReportOwner,
 ): Promise<{ pdf: Uint8Array; key: string }> {
-	const data = await gatherReportData(env.ACCOUNTS_DB);
+	const data = await gatherReportData(env.ACCOUNTS_DB, owner);
 	const pdf = await renderReportPdf(env.BROWSER, data);
-	const key = `fund-report-${data.generatedAt.slice(0, 10)}.pdf`;
+	const key = reportKey(owner.id, data.generatedAt.slice(0, 10));
 	await env.REPORTS.put(key, pdf, { httpMetadata: { contentType: "application/pdf" } });
 	return { pdf, key };
 }
@@ -74,43 +88,56 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 	]);
 }
 
-// Assemble the report payload from the D1 system of record. Everything degrades
-// gracefully when the fund has not traded yet (empty tables -> empty sections).
-export async function gatherReportData(db: D1Database): Promise<ReportData> {
-	const configRows = await db.prepare("SELECT key, value FROM config").all<{
-		key: string;
-		value: string;
-	}>();
-	const config = new Map(configRows.results.map((r) => [r.key, r.value]));
-	const startingCash = Number(config.get("starting_cash") ?? "0");
-	const configCash = Number(config.get("cash") ?? String(startingCash));
+// Assemble the report payload for one user's account from the D1 system of
+// record. Everything degrades gracefully when the account has not traded yet
+// (empty tables -> empty sections). NAV falls back to live account state when
+// no snapshot exists (snapshots are future work).
+export async function gatherReportData(db: D1Database, owner: ReportOwner): Promise<ReportData> {
+	const mandateRow = await db
+		.prepare("SELECT value FROM config WHERE key = 'mandate'")
+		.first<{ value: string }>();
+
+	const account = await ensureAccount(db, owner.id);
+	const startingCash = account.starting_cash;
 
 	const navRows = await db
-		.prepare("SELECT ts, cash, positions_value, nav FROM nav_snapshots ORDER BY ts DESC LIMIT 2")
+		.prepare(
+			"SELECT ts, cash, positions_value, nav FROM nav_snapshots WHERE user_id = ? ORDER BY ts DESC LIMIT 2",
+		)
+		.bind(owner.id)
 		.all<{ ts: string; cash: number; positions_value: number; nav: number }>();
 	const latest = navRows.results[0];
 	const prior = navRows.results[1];
 
-	const nav = latest?.nav ?? startingCash;
-	const cash = latest?.cash ?? configCash;
-	const positionsValue = latest?.positions_value ?? 0;
+	const positionsRow = await db
+		.prepare("SELECT COALESCE(SUM(qty * avg_price), 0) AS value FROM positions WHERE user_id = ?")
+		.bind(owner.id)
+		.first<{ value: number }>();
+	const livePositionsValue = positionsRow?.value ?? 0;
+
+	const cash = latest?.cash ?? account.cash;
+	const positionsValue = latest?.positions_value ?? livePositionsValue;
+	const nav = latest?.nav ?? cash + positionsValue;
 
 	const trades = await db
 		.prepare(
 			`SELECT ts, adapter, instrument, action, qty, price, thesis, confidence
-			 FROM trades ORDER BY ts DESC LIMIT 50`,
+			 FROM trades WHERE user_id = ? ORDER BY ts DESC LIMIT 50`,
 		)
+		.bind(owner.id)
 		.all<ReportTrade>();
 
 	const leaderboard = await db
 		.prepare(
-			`SELECT adapter, realized_pnl, unrealized_pnl, trade_count FROM agent_pnl`,
+			`SELECT adapter, realized_pnl, unrealized_pnl, trade_count FROM agent_pnl WHERE user_id = ?`,
 		)
+		.bind(owner.id)
 		.all<ReportLeaderboardRow>();
 
 	return {
 		generatedAt: new Date().toISOString(),
-		mandate: config.get("mandate") ?? "Make money. All trades simulated.",
+		owner: owner.username,
+		mandate: mandateRow?.value ?? "Make money. All trades simulated.",
 		startingCash,
 		nav,
 		cash,

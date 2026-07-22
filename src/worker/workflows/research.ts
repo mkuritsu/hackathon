@@ -11,6 +11,7 @@ const DEFAULT_PORTFOLIO: PortfolioContext = { cash: 100_000, nav: 100_000 };
 
 export interface ResearchParams {
 	cycleId: string;
+	userId: number; // whose account the final calls trade into
 	markets?: MarketKind[]; // default: all
 	topN?: number; // per market
 	portfolio?: PortfolioContext;
@@ -20,7 +21,7 @@ export interface ResearchParams {
 // every pitch, then rank the non-hold pitches by confidence as the final calls.
 export class ResearchWorkflow extends WorkflowEntrypoint<Env, ResearchParams> {
 	async run(event: WorkflowEvent<ResearchParams>, step: WorkflowStep) {
-		const { cycleId } = event.payload;
+		const { cycleId, userId } = event.payload;
 		const topN = event.payload.topN ?? 5;
 		const portfolio = event.payload.portfolio ?? DEFAULT_PORTFOLIO;
 		const markets = event.payload.markets ?? ALL_MARKETS;
@@ -64,7 +65,7 @@ export class ResearchWorkflow extends WorkflowEntrypoint<Env, ResearchParams> {
 		// liquidation + report is future work (see ledger.liquidateAndReport).
 		let executed: { trades: ExecutedTrade[]; cash: number } = { trades: [], cash: 0 };
 		if (this.env.ACCOUNTS_DB) {
-			executed = await step.do("execute", () => executeCalls(this.env.ACCOUNTS_DB, finalCalls));
+			executed = await step.do("execute", () => executeCalls(this.env.ACCOUNTS_DB, userId, finalCalls));
 		}
 
 		return { cycleId, markets, count: pitches.length, finalCalls, executed, pitches };

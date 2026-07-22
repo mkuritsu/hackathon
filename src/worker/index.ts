@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { analyzeApp } from "./analyze";
-import { authApp, sessionCookieMiddleware } from "./auth";
+import { authApp, currentUser, sessionCookieMiddleware } from "./auth";
 import { modelsApp } from "./models-api";
 import { portfolioApp } from "./portfolio-api";
 import { researchApp } from "./research-api";
 import { gatherReportData, generateAndStoreReport, renderReportHtml } from "./report/pdf";
+import { sampleReportData } from "./report/ReportDocument";
 import { runDailyReport } from "./report/run";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -45,11 +46,15 @@ dev.post("/report/run", async (c) => {
 
 app.route("/api/dev", dev);
 
-// Daily desk report as a Browser Rendering PDF. GET (or POST for the live-demo
-// trigger) gathers the fund state from D1, renders the React report, and returns
-// the generated PDF.
+// The logged-in user's own account report as a Browser Rendering PDF. GET (or
+// POST for the live-demo trigger) gathers their account state from D1, renders
+// the React report, stores it in R2, and returns the PDF.
 app.on(["GET", "POST"], "/api/report/pdf", async (c) => {
-	const { pdf, key } = await generateAndStoreReport(c.env);
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
+	const { pdf, key } = await generateAndStoreReport(c.env, { id: user.id, username: user.username });
 	return new Response(pdf, {
 		status: 200,
 		headers: {
@@ -59,26 +64,45 @@ app.on(["GET", "POST"], "/api/report/pdf", async (c) => {
 	});
 });
 
-// HTML preview of the same report (no browser time used) for styling/iteration.
+// HTML preview of the caller's own report (no browser time used) for
+// styling/iteration.
 app.get("/api/report/preview", async (c) => {
-	const data = await gatherReportData(c.env.ACCOUNTS_DB);
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
+	const data = c.req.query("sample")
+		? sampleReportData(user.username)
+		: await gatherReportData(c.env.ACCOUNTS_DB, { id: user.id, username: user.username });
 	return c.html(renderReportHtml(data));
 });
 
-// List the report PDFs stored in R2 (newest first).
+// List only the caller's own report PDFs stored in R2 (newest first).
 app.get("/api/reports", async (c) => {
-	const listing = await c.env.REPORTS.list();
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
+	const listing = await c.env.REPORTS.list({ prefix: `report-${user.id}-` });
 	const reports = listing.objects
 		.map((o) => ({ key: o.key, size: o.size, uploaded: o.uploaded }))
 		.sort((a, b) => new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime());
 	return c.json({ reports });
 });
 
-// Download a single report PDF from R2.
+// Download a single report PDF from R2. A user may only download their own
+// reports (keys are prefixed with their user id).
 app.get("/api/reports/:key{.+\\.pdf}", async (c) => {
+	const user = await currentUser(c);
+	if (!user) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
 	const key = c.req.param("key");
 	if (key.includes("/") || key.includes("..")) {
 		return c.json({ error: "Invalid report key" }, 400);
+	}
+	if (!key.startsWith(`report-${user.id}-`)) {
+		return c.json({ error: "Report not found" }, 404);
 	}
 	const object = await c.env.REPORTS.get(key);
 	if (!object) {

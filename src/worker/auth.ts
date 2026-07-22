@@ -4,6 +4,7 @@
 import { Hono } from "hono";
 import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { ensureAccount } from "./account";
 
 const SESSION_TTL_DAYS = 30;
 const SESSION_TTL_SECONDS = SESSION_TTL_DAYS * 86_400;
@@ -11,7 +12,7 @@ const COOKIE_NAME = "session";
 
 type AppEnv = { Bindings: Env };
 
-interface User {
+export interface User {
 	id: number;
 	username: string;
 	email: string | null;
@@ -64,6 +65,12 @@ function requestToken(c: Context<AppEnv>): string {
 	}
 	const header = c.req.header("Authorization") ?? "";
 	return header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+}
+
+// Resolve the authenticated user for a request, or null if there is no valid
+// session. Shared by any route that scopes data to the logged-in user.
+export function currentUser(c: Context<AppEnv>): Promise<User | null> {
+	return findSessionUser(requestToken(c), c.env.ACCOUNTS_DB);
 }
 
 async function findSessionUser(token: string, db: D1Database): Promise<User | null> {
@@ -120,6 +127,10 @@ authApp.post("/login", async (c) => {
 	if (!user) {
 		return c.json({ error: "Failed to create session" }, 500);
 	}
+
+	// Every user is their own simulated fund: make sure an account (with the
+	// default starting capital) exists before they can trade.
+	await ensureAccount(db, user.id);
 
 	const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
 	const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString();

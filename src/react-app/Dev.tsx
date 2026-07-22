@@ -50,13 +50,13 @@ export default function Dev({ onBack }: { onBack: () => void }) {
 		{
 			key: "run",
 			label: "Run daily report (cron)",
-			hint: "POST /api/dev/report/run - generate PDF, store in R2, email all users",
+			hint: "POST /api/dev/report/run - per user: generate PDF, store in R2, email them their own",
 			onClick: () => run("run", "/api/dev/report/run", "POST"),
 		},
 		{
 			key: "pdf",
 			label: "Generate + store PDF",
-			hint: "Opens POST /api/report/pdf output (stored in R2, not emailed)",
+			hint: "Opens /api/report/pdf for your account (stored in R2, not emailed)",
 			onClick: () => window.open("/api/report/pdf", "_blank"),
 		},
 		{
