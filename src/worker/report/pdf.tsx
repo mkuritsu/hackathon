@@ -35,14 +35,20 @@ export async function renderReportPdf(
 	let lastError: unknown;
 	for (let attempt = 1; attempt <= 3; attempt++) {
 		try {
-			const response = await browser.quickAction("pdf", {
-				html,
-				pdfOptions: {
-					format: "a4",
-					printBackground: true,
-					margin: { top: "0", bottom: "0", left: "0", right: "0" },
-				},
-			});
+			// Bound each attempt so a stuck Browser Rendering call can't hang the
+			// whole request forever.
+			const response = await withTimeout(
+				browser.quickAction("pdf", {
+					html,
+					pdfOptions: {
+						format: "a4",
+						printBackground: true,
+						margin: { top: "0", bottom: "0", left: "0", right: "0" },
+					},
+					gotoOptions: { waitUntil: "networkidle0", timeout: 20_000 },
+				}),
+				25_000,
+			);
 			if (!response.ok) {
 				const detail = (await response.text()).slice(0, 300);
 				throw new Error(`Browser Rendering PDF failed: HTTP ${response.status} ${detail}`);
@@ -57,6 +63,15 @@ export async function renderReportPdf(
 		}
 	}
 	throw lastError instanceof Error ? lastError : new Error("Browser Rendering PDF failed");
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	return Promise.race([
+		promise,
+		new Promise<T>((_, reject) =>
+			setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms),
+		),
+	]);
 }
 
 // Assemble the report payload from the D1 system of record. Everything degrades

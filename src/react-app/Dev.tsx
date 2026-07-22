@@ -15,8 +15,11 @@ export default function Dev({ onBack }: { onBack: () => void }) {
 
 	async function run(key: string, path: string, method: "GET" | "POST") {
 		set(key, { status: "running" });
+		// Never let the button spin forever; abort after 90s.
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 90_000);
 		try {
-			const response = await fetch(path, { method });
+			const response = await fetch(path, { method, signal: controller.signal });
 			const text = await response.text();
 			let pretty = text;
 			try {
@@ -29,10 +32,17 @@ export default function Dev({ onBack }: { onBack: () => void }) {
 				text: `HTTP ${response.status}\n${pretty}`,
 			});
 		} catch (error) {
+			const aborted = error instanceof DOMException && error.name === "AbortError";
 			set(key, {
 				status: "error",
-				text: error instanceof Error ? error.message : "Request failed",
+				text: aborted
+					? "Timed out after 90s"
+					: error instanceof Error
+						? error.message
+						: "Request failed",
 			});
+		} finally {
+			clearTimeout(timeout);
 		}
 	}
 
