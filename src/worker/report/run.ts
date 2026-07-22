@@ -9,11 +9,18 @@ export interface DailyReportResult {
 	key: string;
 	size: number;
 	emailsSent: number;
+	emailsFailed: number;
 	emailSkipped: boolean;
 }
 
 export async function runDailyReport(env: Env): Promise<DailyReportResult> {
 	const { pdf, key } = await generateAndStoreReport(env);
-	const { sent, skipped } = await sendReportEmail(env, pdf, key);
-	return { key, size: pdf.byteLength, emailsSent: sent, emailSkipped: skipped };
+	const { sent, failed, skipped } = await sendReportEmail(env, pdf, key);
+	return {
+		key,
+		size: pdf.byteLength,
+		emailsSent: sent,
+		emailsFailed: failed,
+		emailSkipped: skipped,
+	};
 }

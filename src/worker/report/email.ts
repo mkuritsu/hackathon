@@ -14,10 +14,10 @@ export async function sendReportEmail(
 	env: Env,
 	pdf: Uint8Array,
 	key: string,
-): Promise<{ sent: number; skipped: boolean }> {
+): Promise<{ sent: number; failed: number; skipped: boolean }> {
 	const recipients = await recipientEmails(env.ACCOUNTS_DB);
 	if (recipients.length === 0) {
-		return { sent: 0, skipped: true };
+		return { sent: 0, failed: 0, skipped: true };
 	}
 
 	const date = key.replace(/^fund-report-|\.pdf$/g, "");
@@ -27,24 +27,32 @@ export async function sendReportEmail(
 	const text = `Hedge Fund of Agents\n\nYour daily desk report for ${date} is attached.\nAll trades are simulated.`;
 
 	// One message per recipient so addresses are not disclosed to each other.
+	// Email is best-effort: a failure for one recipient must not fail the whole
+	// report job (the PDF is already generated and stored in R2).
 	let sent = 0;
+	let failed = 0;
 	for (const to of recipients) {
-		await env.EMAIL.send({
-			to,
-			from: FROM,
-			subject: `Daily Desk Report - ${date}`,
-			html,
-			text,
-			attachments: [
-				{
-					content: pdf,
-					filename: key,
-					type: "application/pdf",
-					disposition: "attachment",
-				},
-			],
-		});
-		sent++;
+		try {
+			await env.EMAIL.send({
+				to,
+				from: FROM,
+				subject: `Daily Desk Report - ${date}`,
+				html,
+				text,
+				attachments: [
+					{
+						content: pdf,
+						filename: key,
+						type: "application/pdf",
+						disposition: "attachment",
+					},
+				],
+			});
+			sent++;
+		} catch (error) {
+			failed++;
+			console.error(`Failed to email report to ${to}:`, error);
+		}
 	}
-	return { sent, skipped: false };
+	return { sent, failed, skipped: false };
 }
