@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - '@cloudflare/vite-plugin@1.46.0'
+  - '@vitejs/plugin-react@6.0.4'
+  - miniflare@4.20260721.0
+  - wrangler@4.113.0
